@@ -3,7 +3,7 @@
   
   # Arena Fixes
   
-  [![License: MIT](https://img.shields.io/badge/License-MIT-8b5cf6?style=flat-square)](https://opensource.org/licenses/MIT)
+  [![License: CUSTOM](https://img.shields.io/badge/License-MIT-8b5cf6?style=flat-square)](LICENSE)
   [![GitHub](https://img.shields.io/badge/GitHub-Arena--Fixes-111827?style=flat-square&logo=github)](https://github.com/AstwareDev/Arena-Fixes)
   [![Website](https://img.shields.io/badge/Website-arenafixes.vercel.app-111827?style=flat-square&logo=vercel)](https://arenafixes.vercel.app)
   
