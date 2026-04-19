@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Arena Fixes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #000;
+            --bg-card: #111;
+            --bg-input: #050505;
+            --bg-hover: #1a1a1a;
+            --text-primary: #eaeaea;
+            --text-secondary: #999;
+            --text-muted: #666;
+            --border-light: #333;
+            --border-medium: #222;
+            --border-hover: #444;
+            --accent-gradient: linear-gradient(90deg, #5855f7, #a855f7);
+            --accent-glow: #7e55f766;
+            --status-success: #22c55e;
+            --status-warning: #f59e0b;
+            --status-error: #ef4444;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+            --font-mono: "SFMono-Regular", Consolas, monospace;
+            --radius: 8px;
+            --transition: 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0 }
+        html { scrollbar-width: thin; scrollbar-color: var(--border-light) var(--bg-body) }
+        ::-webkit-scrollbar { width: 6px }
+        ::-webkit-scrollbar-track { background: var(--bg-body) }
+        ::-webkit-scrollbar-thumb { background-color: var(--border-light); border-radius: var(--radius) }
+        ::-webkit-scrollbar-thumb:hover { background-color: var(--text-muted) }
+
+        body {
+            font-family: var(--font-sans);
+            width: 360px;
+            padding: 24px;
+            background: var(--bg-body);
+            color: var(--text-primary);
+            position: relative
+        }
+
+        .header { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; text-align: center }
+        .logo { width: 50px; height: 40px; margin-bottom: 12px }
+        h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px }
+        p.subtitle { font-size: 14px; color: var(--text-secondary); line-height: 1.5 }
+
+        .tab-nav { display: flex; border-bottom: 1px solid var(--border-medium); margin-bottom: 16px }
+        .tab-btn { flex: 1; padding: 10px 6px; background: transparent; border: none; color: var(--text-secondary); font-size: 13px; font-weight: 500; cursor: pointer; transition: all var(--transition); border-bottom: 2px solid transparent; position: relative; top: 1px }
+        .tab-btn:hover { color: var(--text-primary) }
+        .tab-btn.active { color: var(--text-primary); border-bottom-color: var(--text-primary) }
+
+        #status { background: var(--bg-input); border: 1px solid var(--border-medium); border-radius: var(--radius); padding: 10px 16px; margin-bottom: 20px; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 42px; transition: all var(--transition); text-align: center }
+        #status::before { content: ''; display: block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--text-muted); transition: background-color var(--transition); flex-shrink: 0 }
+        #status.success::before { background-color: var(--status-success) }
+        #status.warning::before { background-color: var(--status-warning) }
+        #status.error::before { background-color: var(--status-error) }
+
+        .tab-content { display: none; animation: fadeIn .3s ease }
+        .tab-content.active { display: block }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px) } to { opacity: 1; transform: translateY(0) } }
+
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px }
+
+        .btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 40px; padding: 0 12px; border-radius: var(--radius); font-size: 14px; font-weight: 500; color: var(--text-primary); cursor: pointer; transition: all var(--transition); border: 1px solid transparent; background: linear-gradient(var(--bg-card), var(--bg-card)) padding-box, linear-gradient(to right, var(--border-light), var(--border-medium)) border-box; box-shadow: 0 1px 2px rgba(0,0,0,.2) }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,.2); background: linear-gradient(var(--bg-card), var(--bg-card)) padding-box, linear-gradient(to right, var(--border-hover), #555) border-box }
+        .btn.btn-full { width: 100% }
+        .btn-primary { background: var(--accent-gradient); border: none }
+        .btn-primary:hover { background: var(--accent-gradient); box-shadow: 0 0 20px -5px var(--accent-glow) }
+
+        .card { background: var(--bg-card); padding: 16px; border-radius: var(--radius); border: 1px solid var(--border-medium); margin-bottom: 16px }
+        .card:last-child { margin-bottom: 0 }
+        .card-label { font-size: 11px; font-weight: 500; color: var(--text-secondary); margin-bottom: 12px; letter-spacing: .08em; text-transform: uppercase }
+
+        .toggle-switch { display: flex; align-items: center; justify-content: space-between }
+        .toggle-switch-label { font-size: 14px; font-weight: 500; color: var(--text-primary) }
+        .toggle-desc { font-size: 12px; color: var(--text-muted); margin-top: 6px }
+
+        .switch { position: relative; display: inline-block; width: 40px; height: 24px; cursor: pointer; flex-shrink: 0 }
+        .switch input[type="checkbox"] { opacity: 0; width: 0; height: 0 }
+        .slider { position: absolute; cursor: pointer; inset: 0; background-color: var(--bg-input); border: 1px solid var(--border-light); border-radius: 24px; transition: var(--transition) }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: var(--text-muted); border-radius: 50%; transition: var(--transition); box-shadow: 0 1px 2px rgba(0,0,0,.4) }
+        input:checked+.slider { background: #5855f7; border-color: #5855f7 }
+        input:checked+.slider:before { transform: translateX(16px); background-color: #fff }
+
+        .monospace-box { width: 100%; background: var(--bg-input); color: var(--text-secondary); border: 1px solid var(--border-medium); border-radius: var(--radius); font-family: var(--font-mono); font-size: 13px; line-height: 1.7 }
+        #latestPreview { padding: 12px; min-height: 58px; white-space: pre-wrap; word-break: break-word; margin-bottom: 12px }
+
+        .footer-note { font-size: 12px; color: var(--text-muted); margin-top: 12px; text-align: center }
+
+        .command-prompt { display: flex; flex-direction: column; gap: 6px; padding: 16px; margin-bottom: 12px }
+        .command-prompt>div::before { content: ">"; color: var(--text-muted); margin-right: .75em }
+        .cmd-keyword { color: var(--text-primary) }
+        .cmd-args { color: var(--text-secondary) }
+
+        .section-divider { height: 1px; background: var(--border-medium); margin: 16px 0 }
+
+        .pfp-url-input { width: 100%; background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-medium); border-radius: var(--radius); padding: 8px 12px; font-family: var(--font-mono); font-size: 12px; margin-top: 8px; outline: none; transition: border-color var(--transition) }
+        .pfp-url-input:focus { border-color: var(--border-hover) }
+        .pfp-url-input::placeholder { color: var(--text-muted) }
+
+        /* About */
+        .credits-container { display: flex; flex-direction: column; gap: 12px }
+        .credit-item { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: var(--radius); text-decoration: none; background-color: var(--bg-input); border: 1px solid var(--border-medium); transition: all var(--transition) }
+        a.credit-item:hover { border-color: var(--border-hover); background-color: #1a1a1a; transform: scale(1.02) }
+        .credit-logo { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-light); background-color: var(--bg-body); flex-shrink: 0 }
+        .credit-info { display: flex; flex-direction: column }
+        .credit-name { font-weight: 500; color: var(--text-primary); font-size: 14px }
+        .credit-description { font-size: 12px; color: var(--text-secondary) }
+
+        /* Donate */
+        .donate-person-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px }
+        .donate-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-light); background-color: var(--bg-body); flex-shrink: 0 }
+        .donate-name { font-size: 14px; font-weight: 500; color: var(--text-primary) }
+        .donate-role { font-size: 11px; color: var(--text-muted); margin-top: 2px }
+
+        .crypto-tab-nav { display: flex; gap: 6px; margin-bottom: 10px }
+        .crypto-tab-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 10px; border-radius: var(--radius); border: 1px solid var(--border-medium); background: var(--bg-input); color: var(--text-muted); font-size: 12px; font-weight: 500; cursor: pointer; transition: all var(--transition) }
+        .crypto-tab-btn:hover { color: var(--text-primary); border-color: var(--border-hover) }
+        .crypto-tab-btn.active { color: var(--text-primary); border-color: var(--border-hover); background: var(--bg-hover) }
+        .crypto-panel { display: none }
+        .crypto-panel.active { display: block }
+
+        .coin-badge-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px }
+        .coin-badge { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0 }
+        .coin-badge-btc { background: #f7931a }
+        .coin-badge-usdt { background: #26a17b }
+        .coin-badge svg { width: 10px; height: 10px; fill: #fff }
+        .coin-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .07em }
+
+        .addr-box { background: var(--bg-input); border: 1px solid var(--border-medium); border-radius: var(--radius); padding: 8px 10px; font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); word-break: break-all; line-height: 1.6; margin-bottom: 8px; user-select: all; cursor: text }
+
+        .donate-copy-btn { width: 100%; height: 34px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: var(--radius); border: 1px solid var(--border-light); background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 500; cursor: pointer; transition: all var(--transition); margin-bottom: 6px }
+        .donate-copy-btn:hover { color: var(--text-primary); border-color: var(--border-hover); background: var(--bg-hover) }
+        .donate-copy-btn.copied { color: var(--status-success); border-color: #22c55e44 }
+        .donate-copy-btn svg { width: 12px; height: 12px }
+
+        .qr-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 34px; border-radius: var(--radius); border: 1px solid var(--border-light); background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 500; cursor: pointer; transition: all var(--transition) }
+        .qr-btn:hover { color: var(--text-primary); border-color: var(--border-hover); background: var(--bg-hover) }
+        .qr-btn svg { width: 13px; height: 13px }
+
+        .donate-warning { background: #1a1100; border: 1px solid #f59e0b33; border-radius: var(--radius); padding: 10px 12px; display: flex; gap: 8px; align-items: flex-start; margin-top: 4px }
+        .donate-warning svg { width: 13px; height: 13px; fill: var(--status-warning); flex-shrink: 0; margin-top: 1px }
+        .donate-warning span { font-size: 11px; color: #d97706; line-height: 1.5 }
+
+        .donate-footer { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 16px; line-height: 1.6 }
+        .donate-heart { color: var(--status-error) }
+
+        /* QR Modal */
+        .qr-modal-backdrop { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; min-height: 100%; background: rgba(0,0,0,.88); z-index: 999; align-items: flex-start; justify-content: center; padding-top: 50px }
+        .qr-modal-backdrop.open { display: flex }
+        .qr-modal { background: #111; border: 1px solid var(--border-light); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; position: relative; min-width: 230px }
+        .qr-modal-name { font-size: 13px; font-weight: 500; color: var(--text-primary) }
+        .qr-modal-coin { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; letter-spacing: .04em }
+        .qr-modal-coin.btc { background: #f7931a22; color: #f7931a; border: 1px solid #f7931a44 }
+        .qr-modal-coin.usdt { background: #26a17b22; color: #26a17b; border: 1px solid #26a17b44 }
+        .qr-modal-img { width: 180px; height: 180px; border-radius: 8px; background: #fff; object-fit: contain; display: block }
+        .qr-modal-placeholder { width: 180px; height: 180px; border-radius: 8px; background: #1a1a1a; border: 1px dashed var(--border-light); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); font-size: 11px }
+        .qr-modal-placeholder svg { width: 36px; height: 36px; opacity: .35 }
+        .qr-modal-addr { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); word-break: break-all; text-align: center; max-width: 200px; line-height: 1.6 }
+        .qr-close { position: absolute; top: 10px; right: 10px; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-light); background: transparent; color: var(--text-muted); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all var(--transition); line-height: 1 }
+        .qr-close:hover { color: var(--text-primary); border-color: var(--border-hover); background: var(--bg-hover) }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <img src="icon_2.png" alt="Arena Logo" class="logo">
+        <h1>Arena Fixes</h1>
+        <p class="subtitle">Tools to enhance your Arena experience.</p>
+    </div>
+
+    <div class="tab-nav">
+        <button class="tab-btn active" data-tab="features">Features</button>
+        <button class="tab-btn" data-tab="advanced">Advanced</button>
+        <button class="tab-btn" data-tab="about">About</button>
+        <button class="tab-btn" data-tab="donate">Donate</button>
+    </div>
+
+    <div id="status">Ready.</div>
+
+    <!-- FEATURES TAB -->
+    <div id="tab-features" class="tab-content active">
+        <div class="card">
+            <div class="card-label">Chat Fixes</div>
+            <div class="action-grid">
+                <button id="unstuckBtn" class="btn">Unstuck Chat</button>
+                <button id="restoreSkipBtn" class="btn">Restore Skip</button>
+                <button id="removeOverlayBtn" class="btn">Remove Overlay</button>
+                <button id="captchaBtn" class="btn">Fix Captcha</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="toggle-switch">
+                <div>
+                    <div class="toggle-switch-label">Bottom Copy Buttons</div>
+                    <div class="toggle-desc">Show copy button below each message bubble.</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="bottomCopyToggle"><span class="slider"></span></label>
+            </div>
+            <div class="section-divider"></div>
+            <div class="toggle-switch">
+                <div>
+                    <div class="toggle-switch-label">Bring Back LMArena</div>
+                    <div class="toggle-desc">Revert to the classic LMArena theme.</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="oldThemeToggle"><span class="slider"></span></label>
+            </div>
+            <div class="section-divider"></div>
+            <div class="toggle-switch">
+                <div>
+                    <div class="toggle-switch-label">Disable Auto Scroll</div>
+                    <div class="toggle-desc">Stop the chat from scrolling on new messages.</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="autoScrollToggle"><span class="slider"></span></label>
+            </div>
+            <div class="section-divider"></div>
+            <div class="toggle-switch">
+                <div>
+                    <div class="toggle-switch-label">Fix Profile Picture</div>
+                    <div class="toggle-desc">Replace placeholder profile pictures. Paste your image URL below.</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="profilePicToggle"><span class="slider"></span></label>
+            </div>
+            <input type="text" id="profilePicUrl" class="pfp-url-input" placeholder="Paste your profile picture URL here..." />
+            <div class="section-divider"></div>
+            <div class="toggle-switch">
+                <div>
+                    <div class="toggle-switch-label">Enhance Prompt Button</div>
+                    <div class="toggle-desc">Adds a ✦ button to the Arena prompt bar. Click the arrow to set reasoning effort.</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="enhancePromptToggle"><span class="slider"></span></label>
+            </div>
+            <div class="section-divider"></div>
+            <div class="toggle-switch">
+                <div>
+                    <div class="toggle-switch-label">Raw User Messages</div>
+                    <div class="toggle-desc">Show user messages as plain text without markdown rendering.</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="rawMarkdownToggle"><span class="slider"></span></label>
+            </div>
+            <div class="section-divider"></div>
+            <div class="toggle-switch">
+                <div>
+                    <div class="toggle-switch-label">Model Starring</div>
+                    <div class="toggle-desc">Allow marking models with a star to keep them at the top of the AI list.</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="enableStarringToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-label">Latest User Message</div>
+            <div id="latestPreview" class="monospace-box">Open arena.ai to load the message.</div>
+            <button id="copyLatestBtn" class="btn btn-primary btn-full">Copy Latest Message</button>
+            <div class="footer-note">Recover your prompt if the page gets stuck.</div>
+        </div>
+    </div>
+
+    <!-- ADVANCED TAB -->
+    <div id="tab-advanced" class="tab-content">
+        <div class="card">
+            <div class="card-label">Network Reset Commands</div>
+            <div class="footer-note" style="text-align:left;margin-top:0;margin-bottom:12px">
+                Run these in Command Prompt as Administrator if the Arena Fixes app fails or isn't installed.
+            </div>
+            <div class="monospace-box command-prompt">
+                <div><span class="cmd-keyword">ipconfig</span><span class="cmd-args"> /flushdns</span></div>
+                <div><span class="cmd-keyword">ipconfig</span><span class="cmd-args"> /release</span></div>
+                <div><span class="cmd-keyword">ipconfig</span><span class="cmd-args"> /renew</span></div>
+                <div><span class="cmd-keyword">netsh</span><span class="cmd-args"> winsock reset</span></div>
+                <div><span class="cmd-keyword">netsh</span><span class="cmd-args"> int ip reset</span></div>
+            </div>
+            <button id="copyCmdsBtn" class="btn" style="margin-top:12px">Copy Commands</button>
+        </div>
+    </div>
+
+    <!-- ABOUT TAB -->
+    <div id="tab-about" class="tab-content">
+        <div class="card">
+            <div class="card-label">Credits</div>
+            <div class="credits-container" id="aboutCredits"></div>
+        </div>
+    </div>
+
+    <!-- DONATE TAB -->
+    <div id="tab-donate" class="tab-content">
+        <div id="donateCards"></div>
+        <div class="donate-warning">
+            <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19H3.5L12 5.5zM11 10h2v5h-2zm0 6h2v2h-2z"/></svg>
+            <span>Only send BTC to BTC addresses and USDT to USDT addresses. Sending the wrong asset or using the wrong network may result in permanent loss of funds.</span>
+        </div>
+        <p class="donate-footer">Every coin counts <span class="donate-heart">❤️</span><br>Thank you for supporting Arena Fixes</p>
+    </div>
+
+    <!-- QR Modal -->
+    <div class="qr-modal-backdrop" id="qrBackdrop">
+        <div class="qr-modal">
+            <button class="qr-close" id="qrClose">&#x2715;</button>
+            <div class="qr-modal-name" id="qrModalName"></div>
+            <div class="qr-modal-coin" id="qrModalCoin"></div>
+            <div class="qr-modal-placeholder" id="qrModalPlaceholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="3" height="3"/>
+                    <rect x="18" y="14" width="3" height="3"/>
+                    <rect x="14" y="18" width="3" height="3"/>
+                    <rect x="18" y="18" width="3" height="3"/>
+                </svg>
+                No QR image set yet
+            </div>
+            <img class="qr-modal-img" id="qrModalImg" src="" alt="QR code" style="display:none">
+            <div class="qr-modal-addr" id="qrModalAddr"></div>
+        </div>
+    </div>
+
+    <script src="src/data/constants.js"></script>
+    <script src="src/data/data.js"></script>
+
+    <script src="src/core/ChromeAPI.js"></script>
+    <script src="src/core/Companion.js"></script>
+
+    <script src="src/features/lmarena-theme/client.js"></script>
+    <script src="src/features/bottom-copy/client.js"></script>
+    <script src="src/features/auto-scroll/client.js"></script>
+    <script src="src/features/enhance-prompt/server.js"></script>
+    <script src="src/features/raw-markdown/client.js"></script>
+    <script src="src/features/profile-pic/client.js"></script>
+    <script src="src/features/chat-fixes/client.js"></script>
+    <script src="src/features/model-starring/server.js"></script>
+
+    <script src="popup.js"></script>
+</body>
+</html>
