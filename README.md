@@ -104,5 +104,5 @@ Independent community project. Not affiliated with or endorsed by Arena.ai. Use 
 ---
 
 <div align="center">
-  <sub>MIT License © 2026 AstwareDev & Twangy Money</sub>
+  <sub>License © 2026 AstwareDev & Twangy Money</sub>
 </div>
