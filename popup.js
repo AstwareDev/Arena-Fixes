@@ -224,3 +224,73 @@ document.addEventListener("DOMContentLoaded", () => {
     $("qrClose").addEventListener("click", closeQR);
     backdrop.addEventListener("click", e => { if (e.target === backdrop) closeQR(); });
 });
+
+// ── Collapsible section logic ──────────────────────────────────────────────
+    (function () {
+        function loadPrefs() {
+            try { return JSON.parse(localStorage.getItem(PREF_KEY) || '{}'); } catch { return {}; }
+        }
+        function savePrefs(p) {
+            try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch {}
+        }
+        const prefs = loadPrefs();
+        function openSection(id) {
+            document.getElementById(id)?.classList.add('open');
+            prefs[id] = true;
+            savePrefs(prefs);
+        }
+        function closeSection(id) {
+            document.getElementById(id)?.classList.remove('open');
+            prefs[id] = false;
+            savePrefs(prefs);
+        }
+        function toggleSection(id) {
+            document.getElementById(id)?.classList.contains('open')
+                ? closeSection(id) : openSection(id);
+        }
+        function updateBadge(sectionId) {
+            const ids   = SECTION_TOGGLES[sectionId];
+            if (!ids) return;
+            const on    = ids.filter(id => document.getElementById(id)?.checked).length;
+            const badge = document.getElementById('badge-' + sectionId.replace('section-', ''));
+            if (!badge) return;
+
+            if (on > 0) {
+                const c = BADGE_COLORS[sectionId];
+                badge.textContent       = on + ' on';
+                badge.style.color       = c.text;
+                badge.style.borderColor = c.border;
+                badge.style.background  = c.bg;
+            } else {
+                badge.textContent       = ids.length;
+                badge.style.color       = '';
+                badge.style.borderColor = '';
+                badge.style.background  = '';
+            }
+        }
+
+        function updateAllBadges() {
+            Object.keys(SECTION_TOGGLES).forEach(updateBadge);
+        }
+        document.querySelectorAll('.section-header').forEach(header => {
+            header.addEventListener('click', () => toggleSection(header.dataset.section));
+        });
+        Object.entries(SECTION_TOGGLES).forEach(([sectionId, ids]) => {
+            ids.forEach(id => {
+                document.getElementById(id)?.addEventListener('change', () => updateBadge(sectionId));
+            });
+        });
+        Object.keys(SECTION_TOGGLES).forEach(id => {
+            if (prefs[id] === true) openSection(id);
+        });
+        updateAllBadges();
+        setTimeout(updateAllBadges, 350);
+
+        const allToggleIds = Object.values(SECTION_TOGGLES).flat();
+        allToggleIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            new MutationObserver(() => updateAllBadges())
+                .observe(el, { attributes: true, attributeFilter: ['checked'] });
+        });
+    }());

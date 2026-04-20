@@ -723,23 +723,132 @@ function removeLightModeOverride() {
 }
 
 // ─── Auto Scroll ──────────────────────────────────────────────────────────────
-function disableAutoScroll() {
-    if (document.getElementById(IDS.AUTO_SCROLL)) return;
-    const style = document.createElement('style');
-    style.id = IDS.AUTO_SCROLL;
-    style.textContent = '* { scroll-behavior: auto !important; }';
-    document.head.appendChild(style);
-    document.querySelectorAll('[style*="scroll"]').forEach(el => {
-        el.setAttribute(ATTR.SCROLL_DISABLED, '1');
-        const originalScroll = el.scrollTop;
-        const obs = new MutationObserver(() => { if (el.scrollTop !== originalScroll) el.scrollTop = originalScroll; });
-        obs.observe(el, { childList: true, subtree: true });
+let autoScrollPatched = false;
+let patchedElements   = new WeakMap(); // el → { origScrollTo, origScrollTop setter }
+let scrollObserver    = null;
+let scrollObserverDebounce = null;
+
+function patchElementScroll(el) {
+    if (patchedElements.has(el)) return;
+
+    const origScrollTo   = el.scrollTo.bind(el);
+    const origScrollTop  = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop') ||
+                           Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollTop');
+
+    // Override scrollTo
+    el.scrollTo = function(...args) {
+        // Allow upward / positional scrolls initiated by the user — block downward auto-scrolls
+        // We block ALL programmatic scrollTo calls while disabled
+        return;
+    };
+
+    // Override scrollTop setter
+    try {
+        Object.defineProperty(el, 'scrollTop', {
+            get() {
+                return origScrollTop
+                    ? origScrollTop.get.call(el)
+                    : 0;
+            },
+            set(_val) {
+                // Swallow programmatic scrollTop assignments
+                return;
+            },
+            configurable: true,
+        });
+    } catch (_) {}
+
+    patchedElements.set(el, { origScrollTo });
+}
+
+function unpatchElementScroll(el) {
+    if (!patchedElements.has(el)) return;
+    const { origScrollTo } = patchedElements.get(el);
+
+    // Restore scrollTo
+    el.scrollTo = origScrollTo;
+
+    // Remove our scrollTop override so the prototype takes over again
+    try {
+        delete el.scrollTop;
+    } catch (_) {}
+
+    patchedElements.delete(el);
+}
+
+function getScrollableElements() {
+    // Grab every element that is actually scrollable
+    return [...document.querySelectorAll('*')].filter(el => {
+        const style = getComputedStyle(el);
+        const overflowY = style.overflowY;
+        return (
+            (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') &&
+            el.scrollHeight > el.clientHeight
+        );
     });
 }
 
+function patchAllScrollableElements() {
+    getScrollableElements().forEach(patchElementScroll);
+}
+
+function unpatchAllScrollableElements() {
+    // Collect keys from WeakMap isn't possible — track them separately
+    document.querySelectorAll('*').forEach(el => {
+        if (patchedElements.has(el)) unpatchElementScroll(el);
+    });
+}
+
+// Patch window-level scroll as well
+let origWindowScrollTo = null;
+let origWindowScrollBy = null;
+
+function patchWindowScroll() {
+    if (origWindowScrollTo) return;
+    origWindowScrollTo = window.scrollTo.bind(window);
+    origWindowScrollBy = window.scrollBy.bind(window);
+    window.scrollTo = () => {};
+    window.scrollBy = () => {};
+}
+
+function unpatchWindowScroll() {
+    if (!origWindowScrollTo) return;
+    window.scrollTo = origWindowScrollTo;
+    window.scrollBy = origWindowScrollBy;
+    origWindowScrollTo = null;
+    origWindowScrollBy = null;
+}
+
+// Watch for new scrollable elements added by React re-renders
+function startScrollObserver() {
+    if (scrollObserver) return;
+    scrollObserver = new MutationObserver(() => {
+        if (scrollObserverDebounce) return;
+        scrollObserverDebounce = setTimeout(() => {
+            scrollObserverDebounce = null;
+            if (autoScrollDisabled) patchAllScrollableElements();
+        }, 150);
+    });
+    scrollObserver.observe(document.body, { childList: true, subtree: true });
+}
+
+function stopScrollObserver() {
+    if (scrollObserver) { scrollObserver.disconnect(); scrollObserver = null; }
+    if (scrollObserverDebounce) { clearTimeout(scrollObserverDebounce); scrollObserverDebounce = null; }
+}
+
+function disableAutoScroll() {
+    autoScrollDisabled = true;
+    patchWindowScroll();
+    patchAllScrollableElements();
+    startScrollObserver();
+}
+
 function enableAutoScroll() {
-    document.getElementById(IDS.AUTO_SCROLL)?.remove();
-    document.querySelectorAll(`[${ATTR.SCROLL_DISABLED}]`).forEach(el => el.removeAttribute(ATTR.SCROLL_DISABLED));
+    autoScrollDisabled = false;
+    stopScrollObserver();
+    unpatchAllScrollableElements();
+    unpatchWindowScroll();
 }
 
 // ─── Profile Picture ──────────────────────────────────────────────────────────
