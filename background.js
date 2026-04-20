@@ -1,4 +1,4 @@
-import { STORAGE_KEYS, ARENA_DOMAINS, ORIGIN_WHITELIST } from "./constants.js";
+import { STORAGE_KEYS, ARENA_DOMAINS, ORIGIN_WHITELIST } from "./src/data/constants.module.js";
 
 chrome.runtime.onInstalled.addListener(() => {
     chrome.storage.local.get(Object.values(STORAGE_KEYS), data => {

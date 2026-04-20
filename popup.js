@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // ── About tab ──────────────────────────────────────────────────────────────
     (function renderAbout() {
         const container = document.getElementById("aboutCredits");
         PEOPLE.forEach(p => {
@@ -15,10 +16,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     })();
 
+    // ── Donate tab ─────────────────────────────────────────────────────────────
     (function renderDonate() {
         const container = document.getElementById("donateCards");
         PEOPLE.filter(p => p.coins).forEach(p => {
-            const card = document.createElement("div");
+            const card   = document.createElement("div");
             card.className = "card";
             const header = `
                 <div class="card-label">${p.name}</div>
@@ -55,9 +57,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     })();
 
-    const $ = id => document.getElementById(id);
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    const $  = id  => document.getElementById(id);
     const $$ = sel => document.querySelectorAll(sel);
 
+    // ── App ────────────────────────────────────────────────────────────────────
     const App = {
         init() {
             UI.bindEvents();
@@ -72,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 Actions.loadEnhancePromptSetting(UI),
                 Actions.loadRawMarkdownSetting(UI),
                 Actions.refreshLatestUserMessagePreview(UI, App),
-                Actions.loadStarringSetting(UI)
+                Actions.loadStarringSetting(UI),
             ]);
             UI.setStatus("Ready.");
         },
@@ -86,78 +90,81 @@ document.addEventListener("DOMContentLoaded", () => {
         wait: ms => new Promise(r => setTimeout(r, ms))
     };
 
+    // ── UI ─────────────────────────────────────────────────────────────────────
     const UI = {
         el: {
-            status: $("status"),
-            tabButtons: $$(".tab-btn"),
-            tabContents: $$(".tab-content"),
-            latestPreview: $("latestPreview"),
-            bottomCopyToggle: $("bottomCopyToggle"),
-            oldThemeToggle: $("oldThemeToggle"),
-            autoScrollToggle: $("autoScrollToggle"),
-            profilePicToggle: $("profilePicToggle"),
-            profilePicUrl: $("profilePicUrl"),
-            enhancePromptToggle: $("enhancePromptToggle"),
-            rawMarkdownToggle: $("rawMarkdownToggle"),
-            enableStarringToggle: $('enableStarringToggle')
+            status:               $("status"),
+            tabButtons:           $$(".tab-btn"),
+            tabContents:          $$(".tab-content"),
+            latestPreview:        $("latestPreview"),
+            bottomCopyToggle:     $("bottomCopyToggle"),
+            oldThemeToggle:       $("oldThemeToggle"),
+            autoScrollToggle:     $("autoScrollToggle"),
+            profilePicToggle:     $("profilePicToggle"),
+            profilePicUrl:        $("profilePicUrl"),
+            enhancePromptToggle:  $("enhancePromptToggle"),
+            rawMarkdownToggle:    $("rawMarkdownToggle"),
+            enableStarringToggle: $("enableStarringToggle"),
         },
         bindEvents() {
             this.el.tabButtons.forEach(btn =>
                 btn.addEventListener("click", () => this.switchTab(btn.dataset.tab))
             );
-            $("unstuckBtn").addEventListener("click", () => Actions.runUnstuckChat(UI, App));
-            $("restoreSkipBtn").addEventListener("click", () => Actions.runRestoreSkipButton(UI, App));
-            $("removeOverlayBtn").addEventListener("click", () => Actions.runRemoveStuckOverlay(UI, App));
-            $("captchaBtn").addEventListener("click", () => Actions.runFixCaptcha(UI, App));
-            $("copyCmdsBtn").addEventListener("click", () => Actions.copyCommands(UI, App));
-            $("copyLatestBtn").addEventListener("click", () => Actions.copyLatestUserMessage(UI, App));
-            this.el.bottomCopyToggle.addEventListener("change", () => Actions.updateBottomCopySetting(UI));
-            this.el.oldThemeToggle.addEventListener("change", () => Actions.updateOldThemeSetting(UI));
-            this.el.autoScrollToggle.addEventListener("change", () => Actions.updateAutoScrollSetting(UI, App));
-            this.el.profilePicToggle.addEventListener("change", () => Actions.updateProfilePicSetting(UI, App));
-            this.el.profilePicUrl.addEventListener("change", () => Actions.updateProfilePicUrl(UI, App));
-            this.el.profilePicUrl.addEventListener("blur", () => Actions.updateProfilePicUrl(UI, App));
-            this.el.enhancePromptToggle.addEventListener("change", () => Actions.updateEnhancePromptSetting(UI));
-            this.el.rawMarkdownToggle.addEventListener("change", () => Actions.updateRawMarkdownSetting(UI, App));
-            this.el.enableStarringToggle.addEventListener('change', () =>
-                Actions.updateStarringSetting(UI, App)
-            );
+            $("unstuckBtn").addEventListener("click",      () => Actions.runUnstuckChat(UI, App));
+            $("restoreSkipBtn").addEventListener("click",  () => Actions.runRestoreSkipButton(UI, App));
+            $("removeOverlayBtn").addEventListener("click",() => Actions.runRemoveStuckOverlay(UI, App));
+            $("captchaBtn").addEventListener("click",      () => Actions.runFixCaptcha(UI, App));
+            $("copyCmdsBtn").addEventListener("click",     () => Actions.copyCommands(UI, App));
+            $("copyLatestBtn").addEventListener("click",   () => Actions.copyLatestUserMessage(UI, App));
+
+            this.el.bottomCopyToggle.addEventListener("change",     () => Actions.updateBottomCopySetting(UI, App));
+            this.el.oldThemeToggle.addEventListener("change",       () => Actions.updateOldThemeSetting(UI, App));
+            this.el.autoScrollToggle.addEventListener("change",     () => Actions.updateAutoScrollSetting(UI, App));
+            this.el.profilePicToggle.addEventListener("change",     () => Actions.updateProfilePicSetting(UI, App));
+            this.el.profilePicUrl.addEventListener("change",        () => Actions.updateProfilePicUrl(UI, App));
+            this.el.profilePicUrl.addEventListener("blur",          () => Actions.updateProfilePicUrl(UI, App));
+            this.el.enhancePromptToggle.addEventListener("change",  () => Actions.updateEnhancePromptSetting(UI, App));
+            this.el.rawMarkdownToggle.addEventListener("change",    () => Actions.updateRawMarkdownSetting(UI, App));
+            this.el.enableStarringToggle.addEventListener("change", () => Actions.updateStarringSetting(UI, App));
         },
         switchTab(tabId) {
             this.el.tabContents.forEach(c => c.classList.remove("active"));
-            this.el.tabButtons.forEach(b => b.classList.remove("active"));
+            this.el.tabButtons.forEach(b  => b.classList.remove("active"));
             $(`tab-${tabId}`).classList.add("active");
             document.querySelector(`[data-tab='${tabId}']`).classList.add("active");
         },
         setStatus(message, type = "default") {
             this.el.status.textContent = message;
-            this.el.status.className = type;
+            this.el.status.className   = type;
         },
-        setLatestPreview: text => { UI.el.latestPreview.textContent = text; },
-        setBottomCopyToggle: checked => { UI.el.bottomCopyToggle.checked = checked; },
-        setOldThemeToggle: checked => { UI.el.oldThemeToggle.checked = checked; },
-        setAutoScrollToggle: checked => { UI.el.autoScrollToggle.checked = checked; },
-        setProfilePicToggle: checked => { UI.el.profilePicToggle.checked = checked; },
-        setProfilePicUrl: url => { UI.el.profilePicUrl.value = url || ""; },
-        setEnhancePromptToggle: checked => { UI.el.enhancePromptToggle.checked = checked; },
-        setRawMarkdownToggle: checked => { UI.el.rawMarkdownToggle.checked = checked; },
-        setStarringToggle: checked => { UI.el.enableStarringToggle.checked = checked; }
+        setLatestPreview:      text    => { UI.el.latestPreview.textContent       = text; },
+        setBottomCopyToggle:   checked => { UI.el.bottomCopyToggle.checked        = checked; },
+        setOldThemeToggle:     checked => { UI.el.oldThemeToggle.checked          = checked; },
+        setAutoScrollToggle:   checked => { UI.el.autoScrollToggle.checked        = checked; },
+        setProfilePicToggle:   checked => { UI.el.profilePicToggle.checked        = checked; },
+        setProfilePicUrl:      url     => { UI.el.profilePicUrl.value             = url || ""; },
+        setEnhancePromptToggle:checked => { UI.el.enhancePromptToggle.checked     = checked; },
+        setRawMarkdownToggle:  checked => { UI.el.rawMarkdownToggle.checked       = checked; },
+        setStarringToggle:     checked => { UI.el.enableStarringToggle.checked    = checked; },
     };
 
+    // ── Actions — merge all server.js action objects ───────────────────────────
+    // Each feature exposes its popup-side actions via a *_ACTIONS object in its server.js.
+    // CHAT_FIXES_ACTIONS comes from src/features/chat-fixes/client.js (no content-side logic).
     const Actions = {
         ...CHAT_FIXES_ACTIONS,
-
-        ...ENHANCE_PROMPT_ACTIONS,
-        ...BOTTOM_COPY_ACTIONS,
         ...LMARENA_THEME_ACTIONS,
+        ...BOTTOM_COPY_ACTIONS,
         ...AUTO_SCROLL_ACTIONS,
-        ...PROFILE_PIC_ACTIONS,
+        ...ENHANCE_PROMPT_ACTIONS,
         ...RAW_MARKDOWN_ACTIONS,
-        ...MODEL_STARRING_ACTIONS
+        ...PROFILE_PIC_ACTIONS,
+        ...MODEL_STARRING_ACTIONS,
     };
 
     App.init();
 
+    // ── Crypto tab switching ───────────────────────────────────────────────────
     document.querySelectorAll(".crypto-tab-nav").forEach(nav => {
         nav.querySelectorAll(".crypto-tab-btn").forEach(btn => {
             btn.addEventListener("click", () => {
@@ -170,12 +177,17 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // ── Copy address buttons ───────────────────────────────────────────────────
     PEOPLE.filter(p => p.coins).forEach(p => {
         p.coins.forEach(c => {
             const btn = $(`btn-${p.key}-${c.coin}`);
             if (!btn) return;
             btn.addEventListener("click", () => {
-                if (!c.addr) { btn.innerHTML = `${ICONS.COPY_ICON} No address set`; setTimeout(() => { btn.innerHTML = `${ICONS.COPY_ICON} Copy address`; }, 1500); return; }
+                if (!c.addr) {
+                    btn.innerHTML = `${ICONS.COPY_ICON} No address set`;
+                    setTimeout(() => { btn.innerHTML = `${ICONS.COPY_ICON} Copy address`; }, 1500);
+                    return;
+                }
                 navigator.clipboard.writeText(c.addr).then(() => {
                     btn.classList.add("copied");
                     btn.innerHTML = `${ICONS.CHECK_ICON} Copied!`;
@@ -185,26 +197,26 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    const backdrop = $("qrBackdrop");
-    const modalImg = $("qrModalImg");
-    const modalPh = $("qrModalPlaceholder");
+    // ── QR Modal ───────────────────────────────────────────────────────────────
+    const backdrop  = $("qrBackdrop");
+    const modalImg  = $("qrModalImg");
+    const modalPh   = $("qrModalPlaceholder");
     const modalName = $("qrModalName");
     const modalCoin = $("qrModalCoin");
     const modalAddr = $("qrModalAddr");
 
     const openQR = (personKey, coinKey) => {
         const person = PEOPLE.find(p => p.key === personKey);
-        const coin = person?.coins?.find(c => c.coin === coinKey);
+        const coin   = person?.coins?.find(c => c.coin === coinKey);
         if (!person || !coin) return;
         modalName.textContent = person.name;
         modalCoin.textContent = coin.coin.toUpperCase();
-        modalCoin.className = `qr-modal-coin ${coinKey}`;
+        modalCoin.className   = `qr-modal-coin ${coinKey}`;
         modalAddr.textContent = coin.addr || "";
         if (coin.qr) { modalImg.src = coin.qr; modalImg.style.display = "block"; modalPh.style.display = "none"; }
-        else { modalImg.style.display = "none"; modalPh.style.display = "flex"; }
+        else          { modalImg.style.display = "none"; modalPh.style.display = "flex"; }
         backdrop.classList.add("open");
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = document.body.scrollTop = 0;
     };
 
     const closeQR = () => backdrop.classList.remove("open");

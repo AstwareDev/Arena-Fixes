@@ -326,19 +326,28 @@
         </div>
     </div>
 
+    <!--
+        Load order matters:
+        1. constants   → window globals (STORAGE_KEYS, MSG, IDS, ATTR, …)
+        2. data        → PEOPLE, ICONS, NETWORK_COMMANDS
+        3. core        → ChromeAPI, Companion (depend on constants)
+        4. feature server.js files → popup-side action objects (depend on ChromeAPI + constants)
+        5. popup.js    → wires everything together
+    -->
     <script src="src/data/constants.js"></script>
     <script src="src/data/data.js"></script>
 
     <script src="src/core/ChromeAPI.js"></script>
     <script src="src/core/Companion.js"></script>
 
-    <script src="src/features/lmarena-theme/client.js"></script>
-    <script src="src/features/bottom-copy/client.js"></script>
-    <script src="src/features/auto-scroll/client.js"></script>
+    <!-- Popup-side action objects (one per feature) -->
+    <script src="src/features/lmarena-theme/server.js"></script>
+    <script src="src/features/bottom-copy/server.js"></script>
+    <script src="src/features/auto-scroll/server.js"></script>
     <script src="src/features/enhance-prompt/server.js"></script>
-    <script src="src/features/raw-markdown/client.js"></script>
-    <script src="src/features/profile-pic/client.js"></script>
-    <script src="src/features/chat-fixes/client.js"></script>
+    <script src="src/features/raw-markdown/server.js"></script>
+    <script src="src/features/profile-pic/server.js"></script>
+    <script src="src/features/chat-fixes/server.js"></script>
     <script src="src/features/model-starring/server.js"></script>
 
     <script src="popup.js"></script>

@@ -37,8 +37,18 @@
         "https://arena.ai/*",
         "https://*.arena.ai/*"
       ],
-      "js": ["content.js", "src/features/enhance-prompt/client.js", "src/features/model-starring/client.js"],
-      "type": "module",
+      "js": [
+        "src/data/constants.js",
+        "content.js",
+        "src/features/enhance-prompt/client.js",
+        "src/features/model-starring/client.js",
+        "src/features/raw-markdown/client.js",
+        "src/features/profile-pic/client.js",
+        "src/features/chat-fixes/client.js",
+        "src/features/auto-scroll/client.js",
+        "src/features/lmarena-theme/client.js",
+        "src/features/bottom-copy/client.js"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -46,7 +56,7 @@
     {
       "resources": [
         "lmarena.png",
-        "src/**/*.js" 
+        "src/**/*.js"
       ],
       "matches": ["https://arena.ai/*", "https://*.arena.ai/*"]
     }
