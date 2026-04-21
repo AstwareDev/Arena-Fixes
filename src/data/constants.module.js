@@ -14,6 +14,7 @@ export const STORAGE_KEYS = {
   CAPTURED_GOOGLE_PIC:    "capturedGooglePic",
   ENABLE_STARRING:        "enableStarringEnabled",
   STARRED_MODELS:         "starredModels",
+  MODEL_THINKING_ENABLED: "modelThinkingEnabled",
 };
 
 export const ARENA_DOMAINS    = ["arena.ai", ".arena.ai", "www.arena.ai", ".www.arena.ai"];

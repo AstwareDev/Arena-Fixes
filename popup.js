@@ -77,6 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 Actions.loadRawMarkdownSetting(UI),
                 Actions.refreshLatestUserMessagePreview(UI, App),
                 Actions.loadStarringSetting(UI),
+                Actions.loadModelThinkingSetting(UI),
             ]);
             UI.setStatus("Ready.");
         },
@@ -105,6 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
             enhancePromptToggle:  $("enhancePromptToggle"),
             rawMarkdownToggle:    $("rawMarkdownToggle"),
             enableStarringToggle: $("enableStarringToggle"),
+            modelThinkingToggle: $('modelThinkingToggle'),
         },
         bindEvents() {
             this.el.tabButtons.forEach(btn =>
@@ -126,6 +128,9 @@ document.addEventListener("DOMContentLoaded", () => {
             this.el.enhancePromptToggle.addEventListener("change",  () => Actions.updateEnhancePromptSetting(UI, App));
             this.el.rawMarkdownToggle.addEventListener("change",    () => Actions.updateRawMarkdownSetting(UI, App));
             this.el.enableStarringToggle.addEventListener("change", () => Actions.updateStarringSetting(UI, App));
+            this.el.modelThinkingToggle.addEventListener('change', () =>
+                Actions.updateModelThinkingSetting(UI, App)
+            );
         },
         switchTab(tabId) {
             this.el.tabContents.forEach(c => c.classList.remove("active"));
@@ -146,6 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setEnhancePromptToggle:checked => { UI.el.enhancePromptToggle.checked     = checked; },
         setRawMarkdownToggle:  checked => { UI.el.rawMarkdownToggle.checked       = checked; },
         setStarringToggle:     checked => { UI.el.enableStarringToggle.checked    = checked; },
+        setModelThinkingToggle: checked => { UI.el.modelThinkingToggle.checked = checked; },
     };
 
     // ── Actions — merge all server.js action objects ───────────────────────────
@@ -160,6 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ...RAW_MARKDOWN_ACTIONS,
         ...PROFILE_PIC_ACTIONS,
         ...MODEL_STARRING_ACTIONS,
+        ...MODEL_THINKING_ACTIONS,
     };
 
     App.init();
