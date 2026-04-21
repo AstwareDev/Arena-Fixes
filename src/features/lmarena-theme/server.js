@@ -3,10 +3,10 @@ const LMARENA_THEME_ACTIONS = {
         const { oldThemeEnabled } = await ChromeAPI.storageGet(["oldThemeEnabled"]);
         UI.setOldThemeToggle(!!oldThemeEnabled);
     },
-    async updateOldThemeSetting(UI) {
+    async updateOldThemeSetting(UI, App) {
         const enabled = UI.el.oldThemeToggle.checked;
         await ChromeAPI.storageSet({ oldThemeEnabled: enabled });
-        const tab = await this.getArenaTab();
+        const tab = await ChromeAPI.getArenaTab(App);
         if (tab) await ChromeAPI.sendMessageToTab(tab.id, { type: MSG.REFRESH_OLD_THEME }).catch(() => { });
         UI.setStatus(enabled ? "LMArena theme enabled." : "LMArena theme disabled.", "success");
     },

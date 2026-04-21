@@ -426,20 +426,19 @@ function removeLMArenaIcons() {
 }
 
 function applyLMArenaFavicon() {
-    if (document.getElementById(IDS.FAVICON)) return;
-    const link = document.createElement('link');
-    link.id   = IDS.FAVICON;
-    link.rel  = 'icon';
-    link.href = chrome.runtime.getURL('lmarena.png');
-    const existing = document.querySelector('link[rel="icon"], link[rel="shortcut icon"]');
-    if (existing) existing.style.display = 'none';
-    document.head.appendChild(link);
+    const existing = document.querySelector('link[rel="icon"]');
+    if (!existing) return;
+    
+    if (existing.href.includes('favicon.svg')) return;
+    
+    existing.href = '/images/favicon.svg';
+    existing.type = 'image/svg+xml';
 }
 
 function removeLMArenaFavicon() {
-    document.getElementById(IDS.FAVICON)?.remove();
-    const existing = document.querySelector('link[rel="icon"], link[rel="shortcut icon"]');
-    if (existing) existing.style.display = '';
+    const existing = document.querySelector('link[rel="icon"]');
+    if (!existing) return;
+    existing.href = '/images/favicon-rebrand.svg';
 }
 
 function applyLMArenaSidebarIcon() {
@@ -568,9 +567,33 @@ function removeLMArenaLogo() {
 
 let logoObserver = null;
 let logoObserverDebounce = null;
+let titleObserver = null;
+
+const TARGET_TITLE = 'LMArena | Choose the best Model';
+
+function forceTitle() {
+    if (document.title !== TARGET_TITLE) {
+        document.title = TARGET_TITLE;
+    }
+}
 
 function startLogoObserver() {
     if (logoObserver) return;
+    
+    if (!titleObserver) {
+        titleObserver = new MutationObserver(() => {
+            forceTitle();
+            applyLMArenaFavicon();
+        });
+        titleObserver.observe(document.head, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+        });
+        forceTitle();
+        applyLMArenaFavicon();
+    }
+    
     logoObserver = new MutationObserver(() => {
         if (logoObserverDebounce) return;
         logoObserverDebounce = setTimeout(() => {
@@ -588,6 +611,7 @@ function startLogoObserver() {
             applyLMArenaSidebarIcon();
             injectThemeToggleButton();
             applyLMArenaModalityIcons();
+            forceTitle();
         }, 300);
     });
     logoObserver.observe(document.body, { childList: true, subtree: true });
@@ -596,6 +620,7 @@ function startLogoObserver() {
 function stopLogoObserver() {
     if (logoObserver) { logoObserver.disconnect(); logoObserver = null; }
     if (logoObserverDebounce) { clearTimeout(logoObserverDebounce); logoObserverDebounce = null; }
+    if (titleObserver) { titleObserver.disconnect(); titleObserver = null; }
 }
 
 async function clickArenaThemeButton(theme) {

@@ -7,7 +7,7 @@ const MODEL_STARRING_ACTIONS = {
     async updateStarringSetting(UI, App) {
         const enabled = UI.el.enableStarringToggle.checked;
         await ChromeAPI.storageSet({ enableStarringEnabled: enabled });
-        const tab = await this.getArenaTab?.();
+        const tab = await ChromeAPI.getArenaTab(App);
         if (tab) {
             await ChromeAPI.sendMessageToTab(tab.id, { type: 'REFRESH_MODEL_STARRING' }).catch(() => {});
         }
