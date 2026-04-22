@@ -100,9 +100,11 @@ function ensureStyleTag() {
 }
 
 function buildBottomButton(originalCopy) {
-    const btn  = originalCopy.cloneNode(true);
+    const btn = originalCopy.cloneNode(true);
     btn.disabled = false;
     btn.classList.add('arena-fixes-copy-btn');
+    
+    btn.style.position = 'relative';
     btn.style.pointerEvents = 'auto';
     btn.style.width = btn.style.height = btn.style.overflow =
         btn.style.margin = btn.style.padding =
@@ -113,8 +115,12 @@ function buildBottomButton(originalCopy) {
     while (btn.firstChild) inner.appendChild(btn.firstChild);
 
     const check = document.createElement('span');
-    check.className  = 'arena-fixes-copy-check';
-    check.textContent = '✓';
+    check.className = 'arena-fixes-copy-check';
+    check.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="green" 
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 13L9 17L19 7"></path>
+        </svg>`;
 
     btn.appendChild(inner);
     btn.appendChild(check);
@@ -122,9 +128,13 @@ function buildBottomButton(originalCopy) {
     btn.addEventListener('click', e => {
         e.preventDefault();
         e.stopPropagation();
+        
         originalCopy.click();
+
         btn.classList.add('arena-fixes-copied');
-        setTimeout(() => btn.classList.remove('arena-fixes-copied'), 1200);
+        setTimeout(() => {
+            btn.classList.remove('arena-fixes-copied');
+        }, 1500);
     });
 
     return btn;
