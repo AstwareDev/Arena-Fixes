@@ -10,6 +10,8 @@ const STORAGE_KEYS = {
   ASK_QUESTIONS_ENABLED: "askQuestionsEnabled",
   RAW_MARKDOWN_ENABLED: "rawMarkdownEnabled",
   CAPTURED_GOOGLE_PIC: "capturedGooglePic",
+  ENABLE_STARRING: "enableStarringEnabled",
+  STARRED_MODELS: "starredModels",
   MODEL_THINKING_ENABLED: "modelThinkingEnabled",
 };
  
@@ -24,6 +26,7 @@ const MSG = {
   REFRESH_ENHANCE_PROMPT: "REFRESH_ENHANCE_PROMPT",
   REFRESH_RAW_MARKDOWN: "REFRESH_RAW_MARKDOWN",
   REFRESH_MODEL_THINKING: "REFRESH_MODEL_THINKING",
+  REFRESH_STARRING: "REFRESH_STARRING",
   NUKE_ARENA_FULL: "NUKE_ARENA_FULL",
   CHECK_ARENA_COOKIES: "CHECK_ARENA_COOKIES",
 };
@@ -57,7 +60,7 @@ const ATTR = {
   RAW_PRE: "data-arena-fixes-raw-pre",
   LOGO: "data-arena-fixes-logo",
   ORIG_COPY: "data-arena-fixes-original-copy-hidden",
-  SCROLL_DISABLED: "data-arena-fixes-scroll-disabled",
+  SCROLL_DISABLED: "data-arena-fixes-scroll-disabled",    
   THINKING_PROCESSED: "data-af-thinking-processed",
   THINKING_STREAMING: "data-af-thinking-streaming",
 };
