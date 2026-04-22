@@ -37,6 +37,7 @@ Arena.ai has been on a streak. Good features got axed, the UI got worse, and som
 - Ai Conversation Renaming
 - Model Pinning (Starring)
 - Model Thinking Markdown & Prompt
+- Arena Ai Flags Editor (In Development)
 
 ---
 
@@ -59,8 +60,9 @@ Then head to [arena.ai](https://arena.ai). You're done.
 
 No telemetry. No remote scripts. No hidden dependencies.
 
-We ask for two permissions:
+We ask for three permissions:
 - `storage` — to remember your settings
+- `cookies` — to clear them when fixing captcha
 - Access to `arena.ai` — to actually run
 
 That's the whole list.
@@ -72,8 +74,6 @@ That's the whole list.
 1. Open an **[Issue](https://github.com/AstwareDev/Arena-Fixes/issues)**
 2. Discuss it
 3. Ship a **Pull Request**
-
-One fix per PR. Keep it scoped.
 
 ---
 
