@@ -18,16 +18,25 @@
 Arena.ai has been on a streak. Good features got axed, the UI got worse, and somehow new things keep shipping that make the experience worse. This extension handles both sides of that problem.
 
 **Stuff they removed that we brought back:**
-- _(list your restored features here)_
+- LMArena UI
 
-**Stuff they added that we let you turn off:**
-- User message markdown rendering
-- Direct Chat model comparisons
-- _(add more here)_
+**Stuff we let you manage:**
+- User Message Markdown Rendering
+- Copy Button Position (Bottom row or middle row)
+- Auto Scroll
 
-**On top of that:**
-- Fixes active UI regressions
-- Adds QoL improvements that should've been there from the start
+**Issues we fix:**
+- User Account Pfp
+- Captcha
+- Chats stuck or infinite generation
+- Direct Chat Comparison skip button not appearing
+- Remove Stuck Overlays
+
+**Additional Features we give:**
+- Prompt Enhancer with Reasoning Effort
+- Ai Conversation Renaming
+- Model Pinning (Starring)
+- Model Thinking Markdown & Prompt
 
 ---
 
