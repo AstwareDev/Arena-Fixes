@@ -547,7 +547,7 @@ function injectLMArenaLogo() {
     logo.style.cssText = 'display:inline-flex;align-items:center;gap:6px;flex-shrink:0;color:currentColor;';
 
     const img  = document.createElement('img');
-    img.src    = chrome.runtime.getURL('lmarena.png');
+    img.src    = "https://arena.ai/images/favicon.svg";
     img.style.cssText = 'width:16px;height:16px;object-fit:contain;flex-shrink:0;';
 
     const text = document.createElement('span');

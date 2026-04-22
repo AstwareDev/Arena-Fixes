@@ -26,7 +26,8 @@ const MSG = {
   REFRESH_ENHANCE_PROMPT: "REFRESH_ENHANCE_PROMPT",
   REFRESH_RAW_MARKDOWN: "REFRESH_RAW_MARKDOWN",
   REFRESH_MODEL_THINKING: "REFRESH_MODEL_THINKING",
-  REFRESH_STARRING: "REFRESH_STARRING",
+  // FIX: was REFRESH_STARRING — client.js listens for REFRESH_MODEL_STARRING
+  REFRESH_MODEL_STARRING: "REFRESH_MODEL_STARRING",
   NUKE_ARENA_FULL: "NUKE_ARENA_FULL",
   CHECK_ARENA_COOKIES: "CHECK_ARENA_COOKIES",
 };
@@ -42,6 +43,8 @@ const IDS = {
   CINZEL_FONT: "arena-fixes-cinzel-font",
   FAVICON: "arena-fixes-favicon",
   MODEL_THINKING: "arena-fixes-model-thinking-style",
+  // FIX: was missing — used in injectStarringStyle()
+  MODEL_STARRING: "arena-fixes-model-starring-style",
 };
  
 // ── Data attributes ───────────────────────────────────────────────────────────
@@ -73,15 +76,15 @@ const CAPTCHA_PATTERNS  = ["recaptcha","hcaptcha","g-recaptcha","h-captcha","cap
 const PREF_KEY = 'af_sections_open';
 const SECTION_TOGGLES = {
   'section-message': ['bottomCopyToggle', 'enhancePromptToggle', 'rawMarkdownToggle', 'autoScrollToggle'],
-  'section-appear': ['oldThemeToggle', 'profilePicToggle'],
-  'section-model': ['enableStarringToggle', 'showHiddenModelsToggle'],
+  'section-appear':  ['oldThemeToggle', 'profilePicToggle'],
+  // FIX: was 'showHiddenModelsToggle' (doesn't exist) — replaced with 'modelThinkingToggle'
+  'section-model':   ['enableStarringToggle', 'modelThinkingToggle'],
 };
 const BADGE_COLORS = {
   'section-message': { text: '#7977f7', border: 'rgba(88,85,247,0.3)', bg: 'rgba(88,85,247,0.08)' },
-  'section-appear': { text: '#c084fc', border: 'rgba(168,85,247,0.3)', bg: 'rgba(168,85,247,0.08)' },
-  'section-model': { text: '#f59e0b', border: 'rgba(245,158,11,0.3)', bg: 'rgba(245,158,11,0.08)' },
+  'section-appear':  { text: '#c084fc', border: 'rgba(168,85,247,0.3)', bg: 'rgba(168,85,247,0.08)' },
+  'section-model':   { text: '#f59e0b', border: 'rgba(245,158,11,0.3)', bg: 'rgba(245,158,11,0.08)' },
 };
-
 
 // ── Export strategy ───────────────────────────────────────────────────────────
 window.STORAGE_KEYS    = STORAGE_KEYS;
@@ -92,7 +95,6 @@ window.COMPANION_PORT  = COMPANION_PORT;
 window.ARENA_DOMAINS   = ARENA_DOMAINS;
 window.ORIGIN_WHITELIST= ORIGIN_WHITELIST;
 window.CAPTCHA_PATTERNS= CAPTCHA_PATTERNS;
-window.PREF_KEY = PREF_KEY;
+window.PREF_KEY        = PREF_KEY;
 window.SECTION_TOGGLES = SECTION_TOGGLES;
-window.BADGE_COLORS = BADGE_COLORS;
-window.STORAGE_KEYS = STORAGE_KEYS;
+window.BADGE_COLORS    = BADGE_COLORS;
