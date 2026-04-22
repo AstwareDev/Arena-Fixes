@@ -48,7 +48,8 @@
         "src/features/auto-scroll/client.js",
         "src/features/lmarena-theme/client.js",
         "src/features/bottom-copy/client.js",
-        "src/features/model-thinking/client.js"
+        "src/features/model-thinking/client.js",
+        "src/features/rename-conversations/client.js"
       ],
       "run_at": "document_idle"
     }

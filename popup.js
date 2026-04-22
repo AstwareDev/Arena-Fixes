@@ -78,6 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 Actions.refreshLatestUserMessagePreview(UI, App),
                 Actions.loadStarringSetting(UI),
                 Actions.loadModelThinkingSetting(UI),
+                Actions.loadRenameConvSetting(UI),
             ]);
             UI.setStatus("Ready.");
         },
@@ -107,6 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
             rawMarkdownToggle:    $("rawMarkdownToggle"),
             enableStarringToggle: $("enableStarringToggle"),
             modelThinkingToggle: $('modelThinkingToggle'),
+            renameConversationsToggle: $('renameConversationsToggle'),
         },
         bindEvents() {
             this.el.tabButtons.forEach(btn =>
@@ -131,6 +133,9 @@ document.addEventListener("DOMContentLoaded", () => {
             this.el.modelThinkingToggle.addEventListener('change', () =>
                 Actions.updateModelThinkingSetting(UI, App)
             );
+            this.el.renameConversationsToggle.addEventListener('change', () =>
+                Actions.updateRenameConvSetting(UI, App)
+            );
         },
         switchTab(tabId) {
             this.el.tabContents.forEach(c => c.classList.remove("active"));
@@ -152,6 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setRawMarkdownToggle:  checked => { UI.el.rawMarkdownToggle.checked       = checked; },
         setStarringToggle:     checked => { UI.el.enableStarringToggle.checked    = checked; },
         setModelThinkingToggle: checked => { UI.el.modelThinkingToggle.checked = checked; },
+        setRenameConvToggle:    checked => { UI.el.renameConversationsToggle.checked = checked; },
     };
 
     // ── Actions — merge all server.js action objects ───────────────────────────
@@ -167,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ...PROFILE_PIC_ACTIONS,
         ...MODEL_STARRING_ACTIONS,
         ...MODEL_THINKING_ACTIONS,
+        ...RENAME_CONV_ACTIONS,
     };
 
     App.init();

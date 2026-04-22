@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
   ENABLE_STARRING: "enableStarringEnabled",
   STARRED_MODELS: "starredModels",
   MODEL_THINKING_ENABLED: "modelThinkingEnabled",
+  RENAME_CONV_ENABLED: "renameConvEnabled",
 };
  
 // ── Message types ─────────────────────────────────────────────────────────────
@@ -28,6 +29,7 @@ const MSG = {
   REFRESH_MODEL_THINKING: "REFRESH_MODEL_THINKING",
   // FIX: was REFRESH_STARRING — client.js listens for REFRESH_MODEL_STARRING
   REFRESH_MODEL_STARRING: "REFRESH_MODEL_STARRING",
+  REFRESH_RENAME_CONV: "REFRESH_RENAME_CONV",
   NUKE_ARENA_FULL: "NUKE_ARENA_FULL",
   CHECK_ARENA_COOKIES: "CHECK_ARENA_COOKIES",
 };
@@ -45,6 +47,7 @@ const IDS = {
   MODEL_THINKING: "arena-fixes-model-thinking-style",
   // FIX: was missing — used in injectStarringStyle()
   MODEL_STARRING: "arena-fixes-model-starring-style",
+  RENAME_CONV_STYLE: "arena-fixes-rename-conv-style",
 };
  
 // ── Data attributes ───────────────────────────────────────────────────────────
@@ -76,7 +79,7 @@ const CAPTCHA_PATTERNS  = ["recaptcha","hcaptcha","g-recaptcha","h-captcha","cap
 const PREF_KEY = 'af_sections_open';
 const SECTION_TOGGLES = {
   'section-message': ['bottomCopyToggle', 'enhancePromptToggle', 'rawMarkdownToggle', 'autoScrollToggle'],
-  'section-appear':  ['oldThemeToggle', 'profilePicToggle'],
+  'section-appear':  ['oldThemeToggle', 'profilePicToggle', 'renameConversationsToggle'],
   // FIX: was 'showHiddenModelsToggle' (doesn't exist) — replaced with 'modelThinkingToggle'
   'section-model':   ['enableStarringToggle', 'modelThinkingToggle'],
 };
