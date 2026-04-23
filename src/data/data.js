@@ -9,10 +9,10 @@ const PEOPLE = [
     {
         key: "astware",
         name: "AstwareDev",
-        role: "UI/UX Design & Frontend",
+        role: "Full-Stack Development & UI/UX Design",
         avatar: "https://cdn.discordapp.com/avatars/1167003237963022388/32462f3e53c4681fbcd3fd04f12412b5.png?size=1024",
         url: "https://astwaredev.vercel.app/",
-        aboutDesc: "UI/UX Design & Frontend",
+        aboutDesc: "Full-Stack Development & UI/UX Design",
         coins: [
             { coin: "btc", label: "Bitcoin", addr: "bc1qdf3js662dvk8qf20tygjt5d5p4s0r0h4kps0nv", network: "Bitcoin Network", badgeSvg: BTC_SVG, badgeClass: "coin-badge-btc", displayLabel: "Bitcoin (BTC)", qr: "/media/bitcoin/AstwareDev_QR.png" },
             { coin: "usdt", label: "Tether", addr: "0x56a70c858a782A4dCe87e3076dC186CfE21d5488", network: "ERC-20 Network", badgeSvg: USDT_SVG, badgeClass: "coin-badge-usdt", displayLabel: "Tether (USDT)", qr: "/media/tether/AstwareDev_QR.png" }
@@ -21,10 +21,10 @@ const PEOPLE = [
     {
         key: "twangy",
         name: "Twangy Money",
-        role: "Functionality & Logic",
+        role: "Functionality & Logic (Backend)",
         avatar: "https://cdn.discordapp.com/avatars/1393169412223270942/ba7df37c464e8316cf4eb6e513a153f2.png?size=1024",
         url: "https://twangymoney.xyz",
-        aboutDesc: "Functionality & Logic",
+        aboutDesc: "Functionality & Logic (Backend)",
         coins: [
             { coin: "btc", label: "Bitcoin", addr: "bc1q0zu9xjedayh4kr57nra24ud8vz0kwzrewx5tjp", network: "Bitcoin Network", badgeSvg: BTC_SVG, badgeClass: "coin-badge-btc", displayLabel: "Bitcoin (BTC)", qr: "/media/bitcoin/Twangy_QR.png" },
             { coin: "usdt", label: "Tether", addr: "0xcA5da6cBeBd475a79EdD74Ad56255E5a1DAABf46", network: "ERC-20 Network", badgeSvg: USDT_SVG, badgeClass: "coin-badge-usdt", displayLabel: "Tether (USDT)", qr: "/media/tether/Twangy_QR.png" }
