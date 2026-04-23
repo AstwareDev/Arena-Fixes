@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
     (function renderDonate() {
         const container = document.getElementById("donateCards");
         PEOPLE.filter(p => p.coins).forEach(p => {
-            const card   = document.createElement("div");
+            const card = document.createElement("div");
             card.className = "card";
             const header = `
                 <div class="card-label">${p.name}</div>
@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })();
 
     // ── Helpers ────────────────────────────────────────────────────────────────
-    const $  = id  => document.getElementById(id);
+    const $ = id => document.getElementById(id);
     const $$ = sel => document.querySelectorAll(sel);
 
     // ── App ────────────────────────────────────────────────────────────────────
@@ -79,6 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 Actions.loadStarringSetting(UI),
                 Actions.loadModelThinkingSetting(UI),
                 Actions.loadRenameConvSetting(UI),
+                Actions.loadPromptHistorySetting(UI),
             ]);
             UI.setStatus("Ready.");
         },
@@ -95,40 +96,41 @@ document.addEventListener("DOMContentLoaded", () => {
     // ── UI ─────────────────────────────────────────────────────────────────────
     const UI = {
         el: {
-            status:               $("status"),
-            tabButtons:           $$(".tab-btn"),
-            tabContents:          $$(".tab-content"),
-            latestPreview:        $("latestPreview"),
-            bottomCopyToggle:     $("bottomCopyToggle"),
-            oldThemeToggle:       $("oldThemeToggle"),
-            autoScrollToggle:     $("autoScrollToggle"),
-            profilePicToggle:     $("profilePicToggle"),
-            profilePicUrl:        $("profilePicUrl"),
-            enhancePromptToggle:  $("enhancePromptToggle"),
-            rawMarkdownToggle:    $("rawMarkdownToggle"),
+            status: $("status"),
+            tabButtons: $$(".tab-btn"),
+            tabContents: $$(".tab-content"),
+            latestPreview: $("latestPreview"),
+            bottomCopyToggle: $("bottomCopyToggle"),
+            oldThemeToggle: $("oldThemeToggle"),
+            autoScrollToggle: $("autoScrollToggle"),
+            profilePicToggle: $("profilePicToggle"),
+            profilePicUrl: $("profilePicUrl"),
+            enhancePromptToggle: $("enhancePromptToggle"),
+            rawMarkdownToggle: $("rawMarkdownToggle"),
             enableStarringToggle: $("enableStarringToggle"),
             modelThinkingToggle: $('modelThinkingToggle'),
             renameConversationsToggle: $('renameConversationsToggle'),
+            promptHistoryToggle: $('promptHistoryToggle')
         },
         bindEvents() {
             this.el.tabButtons.forEach(btn =>
                 btn.addEventListener("click", () => this.switchTab(btn.dataset.tab))
             );
-            $("unstuckBtn").addEventListener("click",      () => Actions.runUnstuckChat(UI, App));
-            $("restoreSkipBtn").addEventListener("click",  () => Actions.runRestoreSkipButton(UI, App));
-            $("removeOverlayBtn").addEventListener("click",() => Actions.runRemoveStuckOverlay(UI, App));
-            $("captchaBtn").addEventListener("click",      () => Actions.runFixCaptcha(UI, App));
-            $("copyCmdsBtn").addEventListener("click",     () => Actions.copyCommands(UI, App));
-            $("copyLatestBtn").addEventListener("click",   () => Actions.copyLatestUserMessage(UI, App));
+            $("unstuckBtn").addEventListener("click", () => Actions.runUnstuckChat(UI, App));
+            $("restoreSkipBtn").addEventListener("click", () => Actions.runRestoreSkipButton(UI, App));
+            $("removeOverlayBtn").addEventListener("click", () => Actions.runRemoveStuckOverlay(UI, App));
+            $("captchaBtn").addEventListener("click", () => Actions.runFixCaptcha(UI, App));
+            $("copyCmdsBtn").addEventListener("click", () => Actions.copyCommands(UI, App));
+            $("copyLatestBtn").addEventListener("click", () => Actions.copyLatestUserMessage(UI, App));
 
-            this.el.bottomCopyToggle.addEventListener("change",     () => Actions.updateBottomCopySetting(UI, App));
-            this.el.oldThemeToggle.addEventListener("change",       () => Actions.updateOldThemeSetting(UI, App));
-            this.el.autoScrollToggle.addEventListener("change",     () => Actions.updateAutoScrollSetting(UI, App));
-            this.el.profilePicToggle.addEventListener("change",     () => Actions.updateProfilePicSetting(UI, App));
-            this.el.profilePicUrl.addEventListener("change",        () => Actions.updateProfilePicUrl(UI, App));
-            this.el.profilePicUrl.addEventListener("blur",          () => Actions.updateProfilePicUrl(UI, App));
-            this.el.enhancePromptToggle.addEventListener("change",  () => Actions.updateEnhancePromptSetting(UI, App));
-            this.el.rawMarkdownToggle.addEventListener("change",    () => Actions.updateRawMarkdownSetting(UI, App));
+            this.el.bottomCopyToggle.addEventListener("change", () => Actions.updateBottomCopySetting(UI, App));
+            this.el.oldThemeToggle.addEventListener("change", () => Actions.updateOldThemeSetting(UI, App));
+            this.el.autoScrollToggle.addEventListener("change", () => Actions.updateAutoScrollSetting(UI, App));
+            this.el.profilePicToggle.addEventListener("change", () => Actions.updateProfilePicSetting(UI, App));
+            this.el.profilePicUrl.addEventListener("change", () => Actions.updateProfilePicUrl(UI, App));
+            this.el.profilePicUrl.addEventListener("blur", () => Actions.updateProfilePicUrl(UI, App));
+            this.el.enhancePromptToggle.addEventListener("change", () => Actions.updateEnhancePromptSetting(UI, App));
+            this.el.rawMarkdownToggle.addEventListener("change", () => Actions.updateRawMarkdownSetting(UI, App));
             this.el.enableStarringToggle.addEventListener("change", () => Actions.updateStarringSetting(UI, App));
             this.el.modelThinkingToggle.addEventListener('change', () =>
                 Actions.updateModelThinkingSetting(UI, App)
@@ -136,28 +138,32 @@ document.addEventListener("DOMContentLoaded", () => {
             this.el.renameConversationsToggle.addEventListener('change', () =>
                 Actions.updateRenameConvSetting(UI, App)
             );
+            this.el.promptHistoryToggle.addEventListener('change', () =>
+                Actions.updatePromptHistorySetting(UI, App)
+            );
         },
         switchTab(tabId) {
             this.el.tabContents.forEach(c => c.classList.remove("active"));
-            this.el.tabButtons.forEach(b  => b.classList.remove("active"));
+            this.el.tabButtons.forEach(b => b.classList.remove("active"));
             $(`tab-${tabId}`).classList.add("active");
             document.querySelector(`[data-tab='${tabId}']`).classList.add("active");
         },
         setStatus(message, type = "default") {
             this.el.status.textContent = message;
-            this.el.status.className   = type;
+            this.el.status.className = type;
         },
-        setLatestPreview:      text    => { UI.el.latestPreview.textContent       = text; },
-        setBottomCopyToggle:   checked => { UI.el.bottomCopyToggle.checked        = checked; },
-        setOldThemeToggle:     checked => { UI.el.oldThemeToggle.checked          = checked; },
-        setAutoScrollToggle:   checked => { UI.el.autoScrollToggle.checked        = checked; },
-        setProfilePicToggle:   checked => { UI.el.profilePicToggle.checked        = checked; },
-        setProfilePicUrl:      url     => { UI.el.profilePicUrl.value             = url || ""; },
-        setEnhancePromptToggle:checked => { UI.el.enhancePromptToggle.checked     = checked; },
-        setRawMarkdownToggle:  checked => { UI.el.rawMarkdownToggle.checked       = checked; },
-        setStarringToggle:     checked => { UI.el.enableStarringToggle.checked    = checked; },
+        setLatestPreview: text => { UI.el.latestPreview.textContent = text; },
+        setBottomCopyToggle: checked => { UI.el.bottomCopyToggle.checked = checked; },
+        setOldThemeToggle: checked => { UI.el.oldThemeToggle.checked = checked; },
+        setAutoScrollToggle: checked => { UI.el.autoScrollToggle.checked = checked; },
+        setProfilePicToggle: checked => { UI.el.profilePicToggle.checked = checked; },
+        setProfilePicUrl: url => { UI.el.profilePicUrl.value = url || ""; },
+        setEnhancePromptToggle: checked => { UI.el.enhancePromptToggle.checked = checked; },
+        setRawMarkdownToggle: checked => { UI.el.rawMarkdownToggle.checked = checked; },
+        setStarringToggle: checked => { UI.el.enableStarringToggle.checked = checked; },
         setModelThinkingToggle: checked => { UI.el.modelThinkingToggle.checked = checked; },
-        setRenameConvToggle:    checked => { UI.el.renameConversationsToggle.checked = checked; },
+        setRenameConvToggle: checked => { UI.el.renameConversationsToggle.checked = checked; },
+        setPromptHistoryToggle: checked => { UI.el.promptHistoryToggle.checked = checked; },
     };
 
     // ── Actions — merge all server.js action objects ───────────────────────────
@@ -174,6 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ...MODEL_STARRING_ACTIONS,
         ...MODEL_THINKING_ACTIONS,
         ...RENAME_CONV_ACTIONS,
+        ...PROMPT_HISTORY_ACTIONS,
     };
 
     App.init();
@@ -212,23 +219,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ── QR Modal ───────────────────────────────────────────────────────────────
-    const backdrop  = $("qrBackdrop");
-    const modalImg  = $("qrModalImg");
-    const modalPh   = $("qrModalPlaceholder");
+    const backdrop = $("qrBackdrop");
+    const modalImg = $("qrModalImg");
+    const modalPh = $("qrModalPlaceholder");
     const modalName = $("qrModalName");
     const modalCoin = $("qrModalCoin");
     const modalAddr = $("qrModalAddr");
 
     const openQR = (personKey, coinKey) => {
         const person = PEOPLE.find(p => p.key === personKey);
-        const coin   = person?.coins?.find(c => c.coin === coinKey);
+        const coin = person?.coins?.find(c => c.coin === coinKey);
         if (!person || !coin) return;
         modalName.textContent = person.name;
         modalCoin.textContent = coin.coin.toUpperCase();
-        modalCoin.className   = `qr-modal-coin ${coinKey}`;
+        modalCoin.className = `qr-modal-coin ${coinKey}`;
         modalAddr.textContent = coin.addr || "";
         if (coin.qr) { modalImg.src = coin.qr; modalImg.style.display = "block"; modalPh.style.display = "none"; }
-        else          { modalImg.style.display = "none"; modalPh.style.display = "flex"; }
+        else { modalImg.style.display = "none"; modalPh.style.display = "flex"; }
         backdrop.classList.add("open");
         document.documentElement.scrollTop = document.body.scrollTop = 0;
     };
@@ -240,71 +247,71 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ── Collapsible section logic ──────────────────────────────────────────────
-    (function () {
-        function loadPrefs() {
-            try { return JSON.parse(localStorage.getItem(PREF_KEY) || '{}'); } catch { return {}; }
-        }
-        function savePrefs(p) {
-            try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch {}
-        }
-        const prefs = loadPrefs();
-        function openSection(id) {
-            document.getElementById(id)?.classList.add('open');
-            prefs[id] = true;
-            savePrefs(prefs);
-        }
-        function closeSection(id) {
-            document.getElementById(id)?.classList.remove('open');
-            prefs[id] = false;
-            savePrefs(prefs);
-        }
-        function toggleSection(id) {
-            document.getElementById(id)?.classList.contains('open')
-                ? closeSection(id) : openSection(id);
-        }
-        function updateBadge(sectionId) {
-            const ids   = SECTION_TOGGLES[sectionId];
-            if (!ids) return;
-            const on    = ids.filter(id => document.getElementById(id)?.checked).length;
-            const badge = document.getElementById('badge-' + sectionId.replace('section-', ''));
-            if (!badge) return;
+(function () {
+    function loadPrefs() {
+        try { return JSON.parse(localStorage.getItem(PREF_KEY) || '{}'); } catch { return {}; }
+    }
+    function savePrefs(p) {
+        try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch { }
+    }
+    const prefs = loadPrefs();
+    function openSection(id) {
+        document.getElementById(id)?.classList.add('open');
+        prefs[id] = true;
+        savePrefs(prefs);
+    }
+    function closeSection(id) {
+        document.getElementById(id)?.classList.remove('open');
+        prefs[id] = false;
+        savePrefs(prefs);
+    }
+    function toggleSection(id) {
+        document.getElementById(id)?.classList.contains('open')
+            ? closeSection(id) : openSection(id);
+    }
+    function updateBadge(sectionId) {
+        const ids = SECTION_TOGGLES[sectionId];
+        if (!ids) return;
+        const on = ids.filter(id => document.getElementById(id)?.checked).length;
+        const badge = document.getElementById('badge-' + sectionId.replace('section-', ''));
+        if (!badge) return;
 
-            if (on > 0) {
-                const c = BADGE_COLORS[sectionId];
-                badge.textContent       = on + ' on';
-                badge.style.color       = c.text;
-                badge.style.borderColor = c.border;
-                badge.style.background  = c.bg;
-            } else {
-                badge.textContent       = ids.length;
-                badge.style.color       = '';
-                badge.style.borderColor = '';
-                badge.style.background  = '';
-            }
+        if (on > 0) {
+            const c = BADGE_COLORS[sectionId];
+            badge.textContent = on + ' on';
+            badge.style.color = c.text;
+            badge.style.borderColor = c.border;
+            badge.style.background = c.bg;
+        } else {
+            badge.textContent = ids.length;
+            badge.style.color = '';
+            badge.style.borderColor = '';
+            badge.style.background = '';
         }
+    }
 
-        function updateAllBadges() {
-            Object.keys(SECTION_TOGGLES).forEach(updateBadge);
-        }
-        document.querySelectorAll('.section-header').forEach(header => {
-            header.addEventListener('click', () => toggleSection(header.dataset.section));
+    function updateAllBadges() {
+        Object.keys(SECTION_TOGGLES).forEach(updateBadge);
+    }
+    document.querySelectorAll('.section-header').forEach(header => {
+        header.addEventListener('click', () => toggleSection(header.dataset.section));
+    });
+    Object.entries(SECTION_TOGGLES).forEach(([sectionId, ids]) => {
+        ids.forEach(id => {
+            document.getElementById(id)?.addEventListener('change', () => updateBadge(sectionId));
         });
-        Object.entries(SECTION_TOGGLES).forEach(([sectionId, ids]) => {
-            ids.forEach(id => {
-                document.getElementById(id)?.addEventListener('change', () => updateBadge(sectionId));
-            });
-        });
-        Object.keys(SECTION_TOGGLES).forEach(id => {
-            if (prefs[id] === true) openSection(id);
-        });
-        updateAllBadges();
-        setTimeout(updateAllBadges, 350);
+    });
+    Object.keys(SECTION_TOGGLES).forEach(id => {
+        if (prefs[id] === true) openSection(id);
+    });
+    updateAllBadges();
+    setTimeout(updateAllBadges, 350);
 
-        const allToggleIds = Object.values(SECTION_TOGGLES).flat();
-        allToggleIds.forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            new MutationObserver(() => updateAllBadges())
-                .observe(el, { attributes: true, attributeFilter: ['checked'] });
-        });
-    }());
+    const allToggleIds = Object.values(SECTION_TOGGLES).flat();
+    allToggleIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        new MutationObserver(() => updateAllBadges())
+            .observe(el, { attributes: true, attributeFilter: ['checked'] });
+    });
+}());

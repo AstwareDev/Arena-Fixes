@@ -14,6 +14,7 @@ const STORAGE_KEYS = {
   STARRED_MODELS: "starredModels",
   MODEL_THINKING_ENABLED: "modelThinkingEnabled",
   RENAME_CONV_ENABLED: "renameConvEnabled",
+  PROMPT_HISTORY_ENABLED: "promptHistoryEnabled",
 };
  
 // ── Message types ─────────────────────────────────────────────────────────────
@@ -30,6 +31,7 @@ const MSG = {
   // FIX: was REFRESH_STARRING — client.js listens for REFRESH_MODEL_STARRING
   REFRESH_MODEL_STARRING: "REFRESH_MODEL_STARRING",
   REFRESH_RENAME_CONV: "REFRESH_RENAME_CONV",
+  REFRESH_PROMPT_HISTORY: "REFRESH_PROMPT_HISTORY",
   NUKE_ARENA_FULL: "NUKE_ARENA_FULL",
   CHECK_ARENA_COOKIES: "CHECK_ARENA_COOKIES",
 };
@@ -48,6 +50,7 @@ const IDS = {
   // FIX: was missing — used in injectStarringStyle()
   MODEL_STARRING: "arena-fixes-model-starring-style",
   RENAME_CONV_STYLE: "arena-fixes-rename-conv-style",
+  PROMPT_HISTORY_STYLE: "arena-fixes-prompt-history-style",
 };
  
 // ── Data attributes ───────────────────────────────────────────────────────────
@@ -78,7 +81,7 @@ const ORIGIN_WHITELIST  = ["https://arena.ai", "https://www.arena.ai"];
 const CAPTCHA_PATTERNS  = ["recaptcha","hcaptcha","g-recaptcha","h-captcha","captcha","turnstile","cf-turnstile","cf-challenge","challenge-form","challenge-container"];
 const PREF_KEY = 'af_sections_open';
 const SECTION_TOGGLES = {
-  'section-message': ['bottomCopyToggle', 'enhancePromptToggle', 'rawMarkdownToggle', 'autoScrollToggle'],
+  'section-message': ['bottomCopyToggle', 'enhancePromptToggle', 'rawMarkdownToggle', 'autoScrollToggle', 'promptHistoryToggle'],
   'section-appear':  ['oldThemeToggle', 'profilePicToggle', 'renameConversationsToggle'],
   // FIX: was 'showHiddenModelsToggle' (doesn't exist) — replaced with 'modelThinkingToggle'
   'section-model':   ['enableStarringToggle', 'modelThinkingToggle'],

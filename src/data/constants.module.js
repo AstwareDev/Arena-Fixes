@@ -15,6 +15,8 @@ export const STORAGE_KEYS = {
   ENABLE_STARRING:        "enableStarringEnabled",
   STARRED_MODELS:         "starredModels",
   MODEL_THINKING_ENABLED: "modelThinkingEnabled",
+  RENAME_CONV_ENABLED:    "renameConvEnabled",
+  PROMPT_HISTORY_ENABLED: "promptHistoryEnabled",
 };
 
 export const ARENA_DOMAINS    = ["arena.ai", ".arena.ai", "www.arena.ai", ".www.arena.ai"];
