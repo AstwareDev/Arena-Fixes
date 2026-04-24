@@ -12,7 +12,7 @@ const RENAME_CONV_ACTIONS = {
             await ChromeAPI.sendMessageToTab(tab.id, { type: MSG.REFRESH_RENAME_CONV }).catch(() => {});
         }
         UI.setStatus(
-            enabled ? 'Conversation renaming enabled.' : 'Conversation renaming disabled.',
+            enabled ? 'Conversation actions enabled.' : 'Conversation actions disabled.',
             'success'
         );
     },
