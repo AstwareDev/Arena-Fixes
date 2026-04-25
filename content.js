@@ -439,7 +439,7 @@ function applyLMArenaFavicon() {
     const existing = document.querySelector('link[rel="icon"]');
     if (!existing) return;
     if (existing.href.includes('favicon.svg')) return;
-    existing.href = '/images/favicon.svg';
+    existing.href = chrome.runtime.getURL('lmarena.svg');
     existing.type = 'image/svg+xml';
 }
 
