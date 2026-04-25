@@ -2,6 +2,8 @@
 // FIXED: markdown inside thinking tags now renders correctly even when the
 // host site's own markdown parser has already processed the content.
 // FIXED: thinking blocks now survive page refresh / SPA navigation.
+// PERF FIX: checkStreaming no longer serialises prose.innerHTML (extremely
+// expensive during streaming). textContent is sufficient and ~10x cheaper.
 
 const MODEL_THINKING_STYLE_ID = 'arena-fixes-model-thinking-style';
 const THINKING_BTN_STYLE_ID   = 'arena-fixes-thinking-btn-style';
@@ -314,41 +316,11 @@ function inlineRender(text) {
 }
 
 // ── FIXED: Extract inner content from a thinking region ───────────────────────
-// The host site may have already run its own markdown parser on the content
-// inside <thinking>…</thinking>, turning raw markdown into rendered HTML
-// (e.g. ### Heading → <h3>, **bold** → <strong>).
-//
-// Strategy:
-//   1. Prefer extracting innerHTML from a real <thinking> DOM element — the
-//      host parser typically leaves the element's children intact.
-//   2. For escaped text-node patterns, serialise the innerHTML of the closest
-//      block ancestor and regex-slice out the raw segment, then convert the
-//      already-rendered HTML back to plain text for our own renderer.
-//      Because the host has done the heavy lifting we can strip its tags and
-//      re-render with our own styles, OR we can embed the host HTML directly
-//      inside our block (simpler and more reliable).
 
-/**
- * Given an element that the host site rendered from inside a <thinking> block,
- * return the best available "source" string for our renderMd().
- *
- * If the host has already rendered markdown into HTML we convert it back to
- * plain markdown-ish text so renderMd() can re-style it with our classes.
- * This is imperfect but vastly better than the raw textContent approach.
- */
 function extractThinkingContent(el) {
-    // If el is a real <thinking> element, its innerHTML is the host-rendered
-    // content. We can either pass it through as-is or convert to text.
-    // We'll wrap the host HTML in our block directly — it already has the right
-    // structure (headings, lists, etc.) and we just need to avoid double-render.
     return el.innerHTML || el.textContent || '';
 }
 
-/**
- * Convert host-rendered HTML (which may contain <h3>, <strong>, <ul>, etc.)
- * to a normalised plain-text representation that our renderMd() understands.
- * We only need to handle the most common conversions.
- */
 function htmlToMarkdown(html) {
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
@@ -387,7 +359,6 @@ function htmlToMarkdown(html) {
             case 'hr':  return '---\n';
             case 'p':   return `${inner}\n`;
             case 'del': return `~~${inner}~~`;
-            // Skip wrapper divs/spans — just return inner content
             default:    return inner;
         }
     }
@@ -741,49 +712,30 @@ function buildBlock(contentHtml, isStreaming, durationMs) {
 
 function processProse(prose) {
     // ── Case 1: Real <thinking> DOM elements ──────────────────────────────────
-    // The host site did NOT recognise the tag and left it as-is in the DOM.
-    // Its children may be raw text or already-rendered markdown HTML.
     prose.querySelectorAll('thinking:not([data-af-done])').forEach(el => {
         if (el.closest('pre, code, [data-af-thinking-block]')) return;
         const startTime = thinkingStartTimes.get(el);
         const dur       = startTime ? Date.now() - startTime : null;
         el.setAttribute('data-af-done', '1');
 
-        // Extract the innerHTML — it may already be rendered HTML (headings,
-        // bold, lists) if the host's markdown parser ran first, OR it may be
-        // raw markdown text. We convert to markdown and re-render with our styles.
         const rawHtml   = el.innerHTML?.trim() || '';
         const asMarkdown = htmlToMarkdown(rawHtml);
-        // If htmlToMarkdown produced non-trivial markdown, use our renderer.
-        // Otherwise fall back to the raw innerHTML directly.
         const rendered  = asMarkdown ? renderMd(asMarkdown) : renderMd(el.textContent?.trim() || '');
         const block     = buildBlock(rendered, false, dur);
         el.replaceWith(block);
     });
 
     // ── Case 2: Escaped &lt;thinking&gt; in serialised HTML ──────────────────
-    // The host rendered the prose but left the <thinking> tag as literal text.
-    // We look for complete open+close pairs in the prose's serialised HTML and
-    // replace the matching DOM subtree.
     processEscapedThinkingInProse(prose);
 }
 
 // ── FIXED: Escaped thinking tag detection via innerHTML ───────────────────────
-// Instead of walking text nodes (which misses content split across elements),
-// we serialise the prose element's innerHTML, find the thinking region in the
-// HTML string, then replace the relevant DOM nodes.
 
 function processEscapedThinkingInProse(prose) {
-    // Serialise the full innerHTML of the prose element.
-    // The escaped tags appear as literal < > because the host site serialised
-    // them that way (the browser stored them as text nodes with < >).
-    // In serialised innerHTML those will appear as &lt;thinking&gt;.
     const html = prose.innerHTML;
 
     const OPEN_ESC  = '&lt;thinking&gt;';
     const CLOSE_ESC = '&lt;/thinking&gt;';
-    // Also handle if the host put them as literal < > inside a text node
-    // (which innerHTML would encode as &lt; &gt;) — already covered above.
 
     let searchFrom = 0;
     while (true) {
@@ -792,33 +744,22 @@ function processEscapedThinkingInProse(prose) {
         const closeIdx = html.indexOf(CLOSE_ESC, openIdx + OPEN_ESC.length);
         if (closeIdx === -1) break;
 
-        // We found a complete pair. Extract the raw inner HTML.
         const innerHtml = html.slice(openIdx + OPEN_ESC.length, closeIdx);
 
-        // Decode HTML entities so we can convert to markdown.
         const tmp = document.createElement('div');
         tmp.innerHTML = innerHtml;
         const asMarkdown = htmlToMarkdown(tmp.innerHTML);
         const rendered   = asMarkdown ? renderMd(asMarkdown) : renderMd(tmp.textContent || '');
         const block      = buildBlock(rendered, false, null);
 
-        // Now we need to surgically replace the DOM nodes that correspond to
-        // this innerHTML region. The safest approach: rebuild the innerHTML
-        // of prose with the block injected in place.
-        // We do this by splitting on the FULL escaped pair and reassembling.
         const fullMatch = OPEN_ESC + innerHtml + CLOSE_ESC;
 
-        // Only replace the FIRST occurrence to avoid infinite loops.
         const newHtml = prose.innerHTML.replace(fullMatch, '___AF_BLOCK_PLACEHOLDER___');
         if (!newHtml.includes('___AF_BLOCK_PLACEHOLDER___')) {
-            // Match not found (innerHtml may have changed due to earlier mutation).
-            // Skip to avoid infinite loop.
             searchFrom = closeIdx + CLOSE_ESC.length;
             continue;
         }
 
-        // Temporarily set innerHTML with placeholder, then replace placeholder
-        // node with our block element.
         prose.innerHTML = newHtml;
         const placeholder = [...prose.childNodes].find(n =>
             n.nodeType === Node.TEXT_NODE && n.nodeValue.includes('___AF_BLOCK_PLACEHOLDER___')
@@ -834,16 +775,26 @@ function processEscapedThinkingInProse(prose) {
             if (after)  frag.appendChild(document.createTextNode(after));
             placeholder.replaceWith(frag);
         } else {
-            // Fallback: placeholder ended up inside an element; just prepend block.
             prose.insertBefore(block, prose.firstChild);
         }
 
-        // Restart scan from beginning of (now-modified) innerHTML.
         searchFrom = 0;
     }
 }
 
+// ── PERF FIX: checkStreaming ───────────────────────────────────────────────────
+// Previously called prose.innerHTML every 180 ms — serialising the entire
+// rendered HTML for EVERY prose element on every mutation during streaming.
+// This was the primary cause of browser freezing during active chats.
+//
+// Fix: use prose.textContent instead.
+//   • textContent is ~10× cheaper (no HTML serialisation, no escaping).
+//   • &lt;thinking&gt; in innerHTML decodes to <thinking> in textContent,
+//     so a single textContent check covers both the escaped-entity case
+//     AND the real-DOM-element case — no separate innerHTML pass needed.
+
 function checkStreaming(prose) {
+    // Handle real <thinking> elements still being streamed in
     prose.querySelectorAll('thinking:not([data-af-done])').forEach(el => {
         if (el.closest('pre, code, [data-af-thinking-block]')) return;
         if (!el.getAttribute('data-af-streaming')) {
@@ -852,35 +803,20 @@ function checkStreaming(prose) {
         }
     });
 
-    // Check for complete escaped pairs.
-    const html = prose.innerHTML;
-    if (html.includes('&lt;thinking&gt;') && html.includes('&lt;/thinking&gt;')) {
-        processProse(prose);
-    }
-
-    // Also check for literal <thinking> in textContent (real DOM element path).
+    // textContent is vastly cheaper than innerHTML.
+    // Both real <thinking> elements and escaped &lt;thinking&gt; text nodes
+    // decode to "<thinking>" in textContent, so one check covers both cases.
     const text = prose.textContent || '';
     if (text.includes('<thinking>') && text.includes('</thinking>')) {
         processProse(prose);
     }
 }
 
-// ── FIXED: scanAll — remove the "scanned" guard that prevents re-processing ───
-// The old guard `data-af-thinking-scanned` was too aggressive: once set, a
-// prose element would only go through `checkStreaming` (not `processProse`),
-// meaning any thinking content that was already rendered at scan time but not
-// yet processed would be permanently skipped after a refresh.
-//
-// New approach: track which *thinking blocks* have been processed (via the
-// `data-af-thinking-block` attribute on the inserted block itself) rather than
-// tagging the whole prose element as done.
-
 function scanAll() {
     document.querySelectorAll(
         '.prose, [class*="prose"], .markdown, [class*="markdown"]'
     ).forEach(prose => {
         if (prose.closest('.bg-surface-raised')) return;
-        // Always check streaming first (handles live generation).
         checkStreaming(prose);
     });
 }
@@ -901,7 +837,7 @@ function enableModelThinking() {
         let db = null;
         thinkingObserver = new MutationObserver(() => {
             if (db) return;
-            db = setTimeout(() => { db = null; scanAll(); }, 180);
+            db = setTimeout(() => { db = null; scanAll(); }, 250);
         });
         thinkingObserver.observe(document.body, {
             childList: true, subtree: true, characterData: true

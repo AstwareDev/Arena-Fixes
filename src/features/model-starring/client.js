@@ -1,5 +1,8 @@
 // Content-script side for Model Starring.
 // constants.js is loaded first by the manifest and exposes STORAGE_KEYS, MSG, IDS, ATTR as globals.
+// PERF FIX: rebuildStarredSection (which clones DOM nodes) is now guarded so it
+// only runs when the model picker (cmdk) is actually open. Previously it ran on
+// every DOM mutation including during chat streaming, causing significant jank.
 
 let starringEnabled  = false;
 let starredModels    = new Set();
@@ -198,15 +201,13 @@ function toggleStar(modelValue, triggerBtn) {
 
     chrome.storage.local.set({ [STORAGE_KEYS.STARRED_MODELS]: [...starredModels] });
 
-    // Animate the clicked button
     if (triggerBtn) {
         triggerBtn.classList.remove('af-star-pop');
-        void triggerBtn.offsetWidth; // reflow
+        void triggerBtn.offsetWidth;
         triggerBtn.classList.add('af-star-pop');
         triggerBtn.addEventListener('animationend', () => triggerBtn.classList.remove('af-star-pop'), { once: true });
     }
 
-    // Update ALL star buttons for this model (original + clone)
     document.querySelectorAll(`.af-star-btn[data-af-model="${CSS.escape(modelValue)}"]`).forEach(btn => {
         refreshStarButton(btn, modelValue);
     });
@@ -221,7 +222,6 @@ function injectStarButtons() {
         const modelValue = getModelValue(item);
         if (!modelValue) return;
 
-        // Track the item for later cloning
         lastKnownItems.set(modelValue, item);
 
         const iconsContainer = item.querySelector('.flex.flex-none.items-center.gap-2');
@@ -232,19 +232,24 @@ function injectStarButtons() {
     });
 }
 
+// ── PERF FIX: isModelPickerOpen guard ─────────────────────────────────────────
+// rebuildStarredSection clones DOM nodes for every starred model — expensive.
+// It only makes sense when the cmdk model picker is actually visible.
+// Calling it during chat streaming (when cmdk is closed) was pure waste.
+function isModelPickerOpen() {
+    return !!document.querySelector('[cmdk-list]');
+}
+
 // ── Rebuild the starred section at the top of the list ────────────────────────
 function rebuildStarredSection() {
-    // Remove old section
     document.querySelectorAll('[data-af-starred-section="1"]').forEach(el => el.remove());
 
     const listContainer = document.querySelector('[cmdk-list-sizer]');
     if (!listContainer) return;
 
-    // Always show the section header if starring is enabled (even empty = hint)
     const section = document.createElement('div');
     section.setAttribute('data-af-starred-section', '1');
 
-    // ── Header
     const label = document.createElement('div');
     label.className = 'af-starred-section-label';
 
@@ -262,7 +267,6 @@ function rebuildStarredSection() {
     section.appendChild(label);
 
     if (starredInList.length === 0) {
-        // Empty hint
         const empty = document.createElement('div');
         empty.className = 'af-starred-empty';
         empty.innerHTML = `
@@ -274,7 +278,6 @@ function rebuildStarredSection() {
         `;
         section.appendChild(empty);
     } else {
-        // Clone each starred item
         starredInList.forEach(modelValue => {
             const original = listContainer.querySelector(
                 `[cmdk-item][data-value="${CSS.escape(modelValue)}"]:not([data-af-starred-clone="true"])`
@@ -284,27 +287,22 @@ function rebuildStarredSection() {
             const clone = original.cloneNode(true);
             clone.setAttribute('data-af-starred-clone', 'true');
             clone.removeAttribute('id');
-            // Remove any cmdk internal selection tracking to avoid conflicts
             clone.removeAttribute('data-selected');
             clone.removeAttribute('aria-selected');
 
-            // Fix the star button in the clone — rebuild it fresh
             const existingStarBtn = clone.querySelector('.af-star-btn');
             if (existingStarBtn) {
                 const newBtn = buildStarButton(modelValue);
                 existingStarBtn.replaceWith(newBtn);
             }
 
-            // Clicking the clone should trigger the original item's click
             clone.addEventListener('click', e => {
                 if (e.target.closest('.af-star-btn')) return;
                 e.preventDefault();
                 e.stopPropagation();
-                // Dispatch a real click on the original so cmdk handles it
                 original.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
             });
 
-            // Also handle pointer events the same way cmdk does (mousedown for selection)
             clone.addEventListener('mousedown', e => {
                 if (e.target.closest('.af-star-btn')) return;
                 original.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
@@ -318,7 +316,6 @@ function rebuildStarredSection() {
         });
     }
 
-    // ── Divider
     const divider = document.createElement('div');
     divider.className = 'af-starred-divider';
     section.appendChild(divider);
@@ -339,11 +336,13 @@ function enableModelStarring() {
             debounce = setTimeout(() => {
                 debounce = null;
                 injectStarButtons();
-                // Only rebuild if the section is missing (e.g. cmdk re-rendered the list)
-                if (!document.querySelector('[data-af-starred-section="1"]')) {
+                // PERF FIX: only rebuild the starred section when the model
+                // picker is actually visible. During chat streaming the picker
+                // is closed, so rebuilding (which clones DOM nodes) is wasteful.
+                if (isModelPickerOpen() && !document.querySelector('[data-af-starred-section="1"]')) {
                     rebuildStarredSection();
                 }
-            }, 120);
+            }, 150);
         });
         starringObserver.observe(document.body, { childList: true, subtree: true });
     }
@@ -373,7 +372,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
     if (STORAGE_KEYS.STARRED_MODELS in changes) {
         starredModels = new Set(changes[STORAGE_KEYS.STARRED_MODELS].newValue || []);
-        // Sync all visible star buttons
         document.querySelectorAll('.af-star-btn').forEach(btn => {
             const mv = btn.getAttribute('data-af-model');
             if (mv) refreshStarButton(btn, mv);
@@ -383,7 +381,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    // Fix: constants.js has REFRESH_STARRING but the message type used elsewhere is REFRESH_MODEL_STARRING
     if (message?.type !== 'REFRESH_MODEL_STARRING' && message?.type !== MSG.REFRESH_STARRING) return;
     chrome.storage.local.get([STORAGE_KEYS.ENABLE_STARRING, STORAGE_KEYS.STARRED_MODELS], data => {
         starringEnabled = !!data[STORAGE_KEYS.ENABLE_STARRING];

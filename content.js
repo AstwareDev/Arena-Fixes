@@ -438,9 +438,7 @@ function removeLMArenaIcons() {
 function applyLMArenaFavicon() {
     const existing = document.querySelector('link[rel="icon"]');
     if (!existing) return;
-    
     if (existing.href.includes('favicon.svg')) return;
-    
     existing.href = '/images/favicon.svg';
     existing.type = 'image/svg+xml';
 }
@@ -759,36 +757,29 @@ function removeLightModeOverride() {
 
 // ─── Auto Scroll ──────────────────────────────────────────────────────────────
 let autoScrollPatched = false;
-let patchedElements   = new WeakMap(); // el → { origScrollTo, origScrollTop setter }
+let autoScrollDisabled = false;
 let scrollObserver    = null;
 let scrollObserverDebounce = null;
 
+// PERF FIX: track patched elements in a Set so unpatchAllScrollableElements
+// never needs to call querySelectorAll('*') — which forces a full layout pass.
+const _patchedSet = new Set();
+let patchedElements   = new WeakMap();
+
 function patchElementScroll(el) {
     if (patchedElements.has(el)) return;
+    _patchedSet.add(el);
 
     const origScrollTo   = el.scrollTo.bind(el);
     const origScrollTop  = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop') ||
                            Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollTop');
 
-    // Override scrollTo
-    el.scrollTo = function(...args) {
-        // Allow upward / positional scrolls initiated by the user — block downward auto-scrolls
-        // We block ALL programmatic scrollTo calls while disabled
-        return;
-    };
+    el.scrollTo = function(...args) { return; };
 
-    // Override scrollTop setter
     try {
         Object.defineProperty(el, 'scrollTop', {
-            get() {
-                return origScrollTop
-                    ? origScrollTop.get.call(el)
-                    : 0;
-            },
-            set(_val) {
-                // Swallow programmatic scrollTop assignments
-                return;
-            },
+            get() { return origScrollTop ? origScrollTop.get.call(el) : 0; },
+            set(_val) { return; },
             configurable: true,
         });
     } catch (_) {}
@@ -800,41 +791,48 @@ function unpatchElementScroll(el) {
     if (!patchedElements.has(el)) return;
     const { origScrollTo } = patchedElements.get(el);
 
-    // Restore scrollTo
     el.scrollTo = origScrollTo;
 
-    // Remove our scrollTop override so the prototype takes over again
-    try {
-        delete el.scrollTop;
-    } catch (_) {}
+    try { delete el.scrollTop; } catch (_) {}
 
     patchedElements.delete(el);
+    _patchedSet.delete(el);
 }
 
+// PERF FIX: replaced querySelectorAll('*') + getComputedStyle on every element
+// with targeted CSS selectors that Arena actually applies to its containers.
+// getComputedStyle forces layout — calling it on every DOM element every 150 ms
+// during streaming was the primary cause of browser freezing.
 function getScrollableElements() {
-    // Grab every element that is actually scrollable
-    return [...document.querySelectorAll('*')].filter(el => {
-        const style = getComputedStyle(el);
-        const overflowY = style.overflowY;
-        return (
-            (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') &&
-            el.scrollHeight > el.clientHeight
-        );
-    });
+    const seen = new Set();
+    const results = [];
+    const selectors = [
+        'main', '[role="main"]', '[role="log"]',
+        '.overflow-y-auto', '.overflow-y-scroll',
+        '.overflow-auto', '.overflow-scroll',
+        '[class*="overflow-y-auto"]', '[class*="overflow-y-scroll"]',
+    ];
+    for (const sel of selectors) {
+        for (const el of document.querySelectorAll(sel)) {
+            if (!seen.has(el) && el.scrollHeight > el.clientHeight) {
+                seen.add(el);
+                results.push(el);
+            }
+        }
+    }
+    return results;
 }
 
 function patchAllScrollableElements() {
     getScrollableElements().forEach(patchElementScroll);
 }
 
+// PERF FIX: no longer walks querySelectorAll('*') — uses _patchedSet instead.
 function unpatchAllScrollableElements() {
-    // Collect keys from WeakMap isn't possible — track them separately
-    document.querySelectorAll('*').forEach(el => {
-        if (patchedElements.has(el)) unpatchElementScroll(el);
-    });
+    _patchedSet.forEach(el => unpatchElementScroll(el));
+    _patchedSet.clear();
 }
 
-// Patch window-level scroll as well
 let origWindowScrollTo = null;
 let origWindowScrollBy = null;
 
@@ -854,15 +852,23 @@ function unpatchWindowScroll() {
     origWindowScrollBy = null;
 }
 
-// Watch for new scrollable elements added by React re-renders
+// PERF FIX: observer now uses addedNodes from mutation records instead of
+// rescanning the entire DOM. During streaming, almost all mutations are text
+// node additions — new scrollable containers are extremely rare.
 function startScrollObserver() {
     if (scrollObserver) return;
-    scrollObserver = new MutationObserver(() => {
+    scrollObserver = new MutationObserver(records => {
         if (scrollObserverDebounce) return;
         scrollObserverDebounce = setTimeout(() => {
             scrollObserverDebounce = null;
-            if (autoScrollDisabled) patchAllScrollableElements();
-        }, 150);
+            if (!autoScrollDisabled) return;
+            for (const record of records) {
+                for (const node of record.addedNodes) {
+                    if (node.nodeType !== 1) continue;
+                    if (node.scrollHeight > node.clientHeight) patchElementScroll(node);
+                }
+            }
+        }, 300);
     });
     scrollObserver.observe(document.body, { childList: true, subtree: true });
 }
@@ -1054,7 +1060,6 @@ function startGooglePicCapture() {
 // ─── State & init ─────────────────────────────────────────────────────────────
 let oldThemeEnabled   = false;
 let enabledState      = false;
-let autoScrollDisabled = false;
 let refreshScheduled  = false;
 
 function refreshIfEnabled() {
