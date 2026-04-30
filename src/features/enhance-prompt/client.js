@@ -674,9 +674,11 @@ function enableEnhancePrompt() {
     injectEnhanceButton();
     if (!enhanceObserver) {
         let debounce = null;
-        enhanceObserver = new MutationObserver(() => {
+        enhanceObserver = new MutationObserver(records => {
             if (debounce) return;
-            debounce = setTimeout(() => { debounce = null; injectEnhanceButton(); }, 150);
+            const hasAddedNodes = records.some(r => r.addedNodes.length > 0);
+            if (!hasAddedNodes) return;
+            debounce = setTimeout(() => { debounce = null; injectEnhanceButton(); }, 500);
         });
         enhanceObserver.observe(document.body, { childList: true, subtree: true });
     }

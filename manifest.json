@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Arena Fixes",
-  "version": "2.1.0",
-  "description": "Enhances Arena.AI with UI fixes, prompt management, and more.",
+  "version": "2.0.0",
+  "description": "Enhances Arena.AI with UI fixes, auto-scrolling, prompt improvements, a custom theme, and other quality-of-life features.",
   "permissions": [
     "storage",
     "tabs",

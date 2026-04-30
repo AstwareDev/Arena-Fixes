@@ -1123,8 +1123,16 @@ function enableRenameConversations() {
 
     if (!renameObserver) {
         let deb = null;
-        renameObserver = new MutationObserver(() => {
+        renameObserver = new MutationObserver(records => {
+            if (document.hidden) return;
             if (deb) return;
+            const hasAddedNodes = records.some(r => r.addedNodes.length > 0);
+            if (!hasAddedNodes) return;
+            const inSidebar = records.some(r =>
+                r.target.closest?.('[data-sidebar]') ||
+                r.target.closest?.('[data-af-ca-pinned-section]') === null
+            );
+            if (!inSidebar && document.querySelector('[data-af-ca-pinned-section]')) return;
             deb = setTimeout(() => {
                 deb = null;
                 processAll();
@@ -1140,7 +1148,7 @@ function enableRenameConversations() {
                 if ((!hasPinned && pins.length) || (!hasFolders && needFolders)) {
                     rebuildSidebarSections();
                 }
-            }, 120);
+            }, 500);
         });
         renameObserver.observe(document.body, { childList: true, subtree: true });
     }

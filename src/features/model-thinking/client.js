@@ -835,9 +835,31 @@ function enableModelThinking() {
 
     if (!thinkingObserver) {
         let db = null;
-        thinkingObserver = new MutationObserver(() => {
+        thinkingObserver = new MutationObserver(records => {
+            if (document.hidden) return;
+            const relevant = records.some(r => {
+                if (r.type === 'characterData') {
+                    const text = r.target.nodeValue || '';
+                    return text.includes('<thinking>') || text.includes('</thinking>');
+                }
+                if (r.type === 'childList') {
+                    for (const node of r.addedNodes) {
+                        if (node.nodeType === 1) {
+                            const tag = node.tagName?.toLowerCase();
+                            if (tag === 'thinking') return true;
+                            if (node.querySelector?.('thinking')) return true;
+                        }
+                        if (node.nodeType === 3) {
+                            const v = node.nodeValue || '';
+                            if (v.includes('<thinking>') || v.includes('</thinking>')) return true;
+                        }
+                    }
+                }
+                return false;
+            });
+            if (!relevant) return;
             if (db) return;
-            db = setTimeout(() => { db = null; scanAll(); }, 250);
+            db = setTimeout(() => { db = null; scanAll(); }, 500);
         });
         thinkingObserver.observe(document.body, {
             childList: true, subtree: true, characterData: true
@@ -1127,9 +1149,11 @@ function enableThinkingButton() {
     injectThinkingButton();
     if (!thinkingBtnObserver) {
         let db = null;
-        thinkingBtnObserver = new MutationObserver(() => {
+        thinkingBtnObserver = new MutationObserver(records => {
+            if (document.hidden) return;
             if (db) return;
-            db = setTimeout(() => { db = null; injectThinkingButton(); }, 150);
+            if (!records.some(r => r.addedNodes.length > 0)) return;
+            db = setTimeout(() => { db = null; injectThinkingButton(); }, 500);
         });
         thinkingBtnObserver.observe(document.body, { childList: true, subtree: true });
     }

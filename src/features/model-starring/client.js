@@ -331,18 +331,19 @@ function enableModelStarring() {
 
     if (!starringObserver) {
         let debounce = null;
-        starringObserver = new MutationObserver(() => {
+        starringObserver = new MutationObserver(records => {
+            if (document.hidden) return;
+            if (!isModelPickerOpen()) return;
             if (debounce) return;
+            const hasAddedNodes = records.some(r => r.addedNodes.length > 0);
+            if (!hasAddedNodes) return;
             debounce = setTimeout(() => {
                 debounce = null;
                 injectStarButtons();
-                // PERF FIX: only rebuild the starred section when the model
-                // picker is actually visible. During chat streaming the picker
-                // is closed, so rebuilding (which clones DOM nodes) is wasteful.
                 if (isModelPickerOpen() && !document.querySelector('[data-af-starred-section="1"]')) {
                     rebuildStarredSection();
                 }
-            }, 150);
+            }, 250);
         });
         starringObserver.observe(document.body, { childList: true, subtree: true });
     }

@@ -746,9 +746,12 @@ function enablePromptHistory() {
 
     if (!historyObserver) {
         let debounce = null;
-        historyObserver = new MutationObserver(() => {
+        historyObserver = new MutationObserver(records => {
+            if (document.hidden) return;
             if (debounce) return;
-            debounce = setTimeout(() => { debounce = null; injectHistoryButton(); }, 150);
+            const hasAddedNodes = records.some(r => r.addedNodes.length > 0);
+            if (!hasAddedNodes) return;
+            debounce = setTimeout(() => { debounce = null; injectHistoryButton(); }, 500);
         });
         historyObserver.observe(document.body, { childList: true, subtree: true });
     }

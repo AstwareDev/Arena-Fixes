@@ -3,6 +3,50 @@
 
 const processedRows = new WeakSet();
 
+let _pageVisible = !document.hidden;
+let _streamActive = false;
+let _streamIdleTimer = null;
+
+document.addEventListener('visibilitychange', () => {
+    _pageVisible = !document.hidden;
+});
+
+function _notifyStreamActive() {
+    _streamActive = true;
+    if (_streamIdleTimer) clearTimeout(_streamIdleTimer);
+    _streamIdleTimer = setTimeout(() => {
+        _streamActive = false;
+        _streamIdleTimer = null;
+    }, 1200);
+}
+
+function _shouldSkipWork() {
+    return !_pageVisible || _streamActive;
+}
+
+(function _installStreamDetector() {
+    const origFetch = window.fetch;
+    window.fetch = function(...args) {
+        const url = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
+        const isStream = url.includes('/stream') || url.includes('/chat') || url.includes('/completions');
+        const p = origFetch.apply(this, args);
+        if (isStream) {
+            p.then(res => {
+                if (!res || !res.body) return;
+                _notifyStreamActive();
+                const reader = res.body.getReader();
+                const pump = () => reader.read().then(({ done }) => {
+                    if (done) { _streamActive = false; return; }
+                    _notifyStreamActive();
+                    pump();
+                }).catch(() => { _streamActive = false; });
+                pump();
+            }).catch(() => {});
+        }
+        return p;
+    };
+})();
+
 // ─── Selectors / IDs (via IDS / ATTR constants) ───────────────────────────────
 function getUserMessageRows() {
     return [...document.querySelectorAll('div.flex.min-w-0.flex-1.items-center.justify-end.gap-2')];
@@ -238,9 +282,16 @@ function enableRawMarkdown() {
     rawMarkdownEnabled = true;
     getUserMessageRows().forEach(applyRawMarkdownToRow);
     if (!rawMarkdownObserver) {
-        rawMarkdownObserver = new MutationObserver(() => {
+        let rawDebounce = null;
+        rawMarkdownObserver = new MutationObserver(records => {
             if (!rawMarkdownEnabled) return;
-            getUserMessageRows().forEach(applyRawMarkdownToRow);
+            if (_shouldSkipWork()) return;
+            if (!records.some(r => r.addedNodes.length > 0)) return;
+            if (rawDebounce) return;
+            rawDebounce = setTimeout(() => {
+                rawDebounce = null;
+                getUserMessageRows().forEach(applyRawMarkdownToRow);
+            }, 500);
         });
         rawMarkdownObserver.observe(document.body, { childList: true, subtree: true });
     }
@@ -602,8 +653,11 @@ function startLogoObserver() {
         applyLMArenaFavicon();
     }
     
-    logoObserver = new MutationObserver(() => {
+    logoObserver = new MutationObserver(records => {
+        if (!_pageVisible) return;
         if (logoObserverDebounce) return;
+        const hasAddedNodes = records.some(r => r.addedNodes.length > 0);
+        if (!hasAddedNodes) return;
         logoObserverDebounce = setTimeout(() => {
             logoObserverDebounce = null;
             if (!document.getElementById(IDS.LMARENA_LOGO)) {
@@ -620,7 +674,7 @@ function startLogoObserver() {
             injectThemeToggleButton();
             applyLMArenaModalityIcons();
             forceTitle();
-        }, 300);
+        }, 500);
     });
     logoObserver.observe(document.body, { childList: true, subtree: true });
 }
@@ -858,6 +912,7 @@ function unpatchWindowScroll() {
 function startScrollObserver() {
     if (scrollObserver) return;
     scrollObserver = new MutationObserver(records => {
+        if (!_pageVisible) return;
         if (scrollObserverDebounce) return;
         scrollObserverDebounce = setTimeout(() => {
             scrollObserverDebounce = null;
@@ -870,6 +925,7 @@ function startScrollObserver() {
             }
         }, 300);
     });
+    scrollObserver.observe(document.body, { childList: true, subtree: true });
     scrollObserver.observe(document.body, { childList: true, subtree: true });
 }
 
@@ -987,13 +1043,20 @@ async function enableProfilePicFix() {
 
     if (!profilePicObserver) {
         let pfpDebounce = null;
-        profilePicObserver = new MutationObserver(() => {
+        profilePicObserver = new MutationObserver(records => {
+            if (_shouldSkipWork()) return;
+            const relevant = records.some(r =>
+                r.type === 'childList' ||
+                (r.type === 'attributes' && r.target.tagName === 'IMG' &&
+                 r.target.src?.includes('/images/avatars/'))
+            );
+            if (!relevant) return;
             if (pfpDebounce) return;
             pfpDebounce = setTimeout(() => {
                 pfpDebounce = null;
                 if (!profilePicUrl?.startsWith('http') && capturedGooglePic) profilePicUrl = capturedGooglePic;
                 replaceArenaAvatars();
-            }, 200);
+            }, 600);
         });
         profilePicObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
     }
@@ -1045,12 +1108,24 @@ function startGooglePicCapture() {
     document.querySelectorAll('img').forEach(checkImg);
 
     googlePicObserver = new MutationObserver(mutations => {
+        if (_shouldSkipWork()) return;
         for (const mutation of mutations) {
-            if (mutation.type === 'attributes' && mutation.target.tagName === 'IMG') checkImg(mutation.target);
+            if (mutation.type === 'attributes') {
+                const t = mutation.target;
+                if (t.tagName === 'IMG' && t.src?.includes('googleusercontent.com')) checkImg(t);
+                continue;
+            }
             for (const node of mutation.addedNodes) {
                 if (node.nodeType !== 1) continue;
-                if (node.tagName === 'IMG') { checkImg(node); node.addEventListener('load', () => checkImg(node), { once: true }); }
-                node.querySelectorAll?.('img').forEach(img => { checkImg(img); img.addEventListener('load', () => checkImg(img), { once: true }); });
+                if (node.tagName === 'IMG') {
+                    checkImg(node);
+                    node.addEventListener('load', () => checkImg(node), { once: true });
+                } else {
+                    node.querySelectorAll?.('img[src*="googleusercontent"]').forEach(img => {
+                        checkImg(img);
+                        img.addEventListener('load', () => checkImg(img), { once: true });
+                    });
+                }
             }
         }
     });
@@ -1095,7 +1170,11 @@ chrome.storage.local.get([
     startGooglePicCapture();
 });
 
-const observer = new MutationObserver(refreshIfEnabled);
+const observer = new MutationObserver(records => {
+    if (_shouldSkipWork()) return;
+    if (!records.some(r => r.addedNodes.length > 0)) return;
+    refreshIfEnabled();
+});
 observer.observe(document.body, { childList: true, subtree: true });
 
 chrome.storage.onChanged.addListener((changes, area) => {
